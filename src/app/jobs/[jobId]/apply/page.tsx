@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { JobDetails } from '@/types/job-details';
 import {
 	Select,
 	SelectContent,
@@ -23,6 +24,7 @@ import {
 	Send
 } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
+import { useJobs } from '@/hooks/useJobs';
 
 interface Milestone {
 	id: string;
@@ -31,16 +33,12 @@ interface Milestone {
 	amount: number;
 }
 
-interface JobDetails {
-	id: string;
-	title: string;
-	budget: string;
-	questions?: string[];
-}
+
 
 const JobApplicationPage = () => {
 	const router = useRouter();
 	const params = useParams();
+	const { jobs } = useJobs();
 	const [job, setJob] = useState<JobDetails | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [bidType, setBidType] = useState<'fixed' | 'milestone'>('fixed');
@@ -53,21 +51,36 @@ const JobApplicationPage = () => {
 	const [answers, setAnswers] = useState<Record<string, string>>({});
 	const [isBoost, setIsBoost] = useState(false);
 	const [isDraft, setIsDraft] = useState(false);
+	const [error, setError] = useState<String>();
 
 	useEffect(() => {
-		// Fetch job details - Mock data for demonstration
-		setJob({
-			id: params?.jobId as string,
-			title: 'Senior Smart Contract Developer Needed for DeFi Protocol',
-			budget: '$1,000 - $2,000',
-			questions: [
-				'How many years of experience do you have with Move programming?',
-				'Have you completed any DeFi projects in the past?',
-				'What security measures do you implement in your smart contracts?'
-			]
-		});
-		setIsLoading(false);
+		const fetchJobDetails = async () => {
+			try {
+				setIsLoading(true);
+
+				// Check if jobs exist and the jobId parameter is valid
+				if (jobs && params?.jobId) {
+					// Find the job with the matching jobId
+					const foundJob = jobs.find((job) => job.id === params.jobId);
+
+					if (foundJob) {
+						setJob(foundJob); // Set the job details
+					} else {
+						setError("Job not found.");
+					}
+				}
+			} catch (err) {
+				setError("An error occurred while fetching job details.");
+			} finally {
+				setIsLoading(false); // End loading state
+			}
+		};
+
+		if (params?.jobId) {
+			fetchJobDetails();
+		}
 	}, [params?.jobId]);
+
 
 	useEffect(() => {
 		// Calculate service fee and amount you'll receive
@@ -305,7 +318,7 @@ const JobApplicationPage = () => {
 								<h3 className="font-medium">Additional Questions</h3>
 								{job.questions.map((question, index) => (
 									<div key={index} className="space-y-2">
-										<Label>{question}</Label>
+										<Label>{question}{}</Label>
 										<Textarea
 											placeholder="Type your answer..."
 											value={answers[index] || ''}

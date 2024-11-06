@@ -65,9 +65,6 @@ const Navbar = () => {
 	}
 	const handleToggle = (checked: boolean) => {
 		setIsClientMode(checked);
-		if (typeof window !== 'undefined') {
-			localStorage.setItem("isClientMode", checked.toString())
-		}
 	};
 	return (
 		<nav className="border-b border-gray-200 bg-white fixed w-full top-0 z-50">

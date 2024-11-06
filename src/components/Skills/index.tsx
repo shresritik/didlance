@@ -1,3 +1,4 @@
+"use client"
 import { useState } from 'react';
 import {
 	Badge,
@@ -24,16 +25,8 @@ const IconButton = ({
 		</button>
 	);
 };
-const CreateJobPostingStep2 = ({ handlePrevious, handleNext }: any) => {
+const CreateJobPostingStep2 = ({ handlePrevious, handleNext, setSelectedSkills, selectedSkills }: any) => {
 	const [searchTerm, setSearchTerm] = useState('');
-	const [selectedSkills, setSelectedSkills] = useState<string[]>([
-		'Adobe After Effects',
-		'Video Post-Editing',
-		'Adobe Premiere Pro',
-		'Video Editing',
-		'Adobe Photoshop',
-		'Motion Graphics',
-	]);
 
 	const sampleSkills = [
 		'Adobe After Effects',
@@ -62,6 +55,10 @@ const CreateJobPostingStep2 = ({ handlePrevious, handleNext }: any) => {
 		'Music Video',
 		'Photo Slideshow',
 		'Testimonial Video',
+		'Node js',
+		'React js',
+		'MongoDB',
+		'API'
 	];
 
 	const filteredSkills = sampleSkills.filter((skill) =>
@@ -75,7 +72,7 @@ const CreateJobPostingStep2 = ({ handlePrevious, handleNext }: any) => {
 	};
 
 	const handleRemoveSkill = (skill: string) => {
-		setSelectedSkills(selectedSkills.filter((s) => s !== skill));
+		setSelectedSkills(selectedSkills.filter((s: any) => s !== skill));
 	};
 
 	return (
@@ -109,7 +106,7 @@ const CreateJobPostingStep2 = ({ handlePrevious, handleNext }: any) => {
 						))}
 					</div>
 					<div className="mt-6 flex items-center flex-wrap gap-2">
-						{selectedSkills.map((skill) => (
+						{selectedSkills.map((skill: any) => (
 							<Badge key={skill} variant="outline">
 								{skill}
 								<IconButton

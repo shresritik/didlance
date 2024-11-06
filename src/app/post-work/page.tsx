@@ -2,48 +2,64 @@
 import React, { useState } from 'react';
 import { DollarSign, AlertCircle } from 'lucide-react';
 import CreateJobPostingStep2 from '@/components/Skills/index';
+import { JobDetails } from '@/types/job-details';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
+import { useWallet } from '@suiet/wallet-kit';
 interface Skill {
   id: string;
   name: string;
 }
 
 const CreateJobPosting = () => {
+  const wallet = useWallet();
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [additionalQuestions, setAdditionalQuestions] = useState<
-    { question: string; required: boolean }[]
-  >([]);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([
+    'Adobe Premiere Pro',
+    'Video Editing',
+    'Node js',
+    'React js',
+    'MongoDB',
+    'API',
+  ]);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    budgetType: "Fixed Price",
+    amount: "",
+    duration: "Less than 1 month",
+    experienceLevel: "Entry Level",
+    attachments: [],
+    additionalQuestions: [{ question: "", required: false }],
+  });
 
-  const sampleSkills: Skill[] = [
-    { id: '1', name: 'React' },
-    { id: '2', name: 'Node.js' },
-    { id: '3', name: 'TypeScript' },
-    { id: '4', name: 'Python' },
-    { id: '5', name: 'Java' },
-    { id: '6', name: 'UI/UX Design' },
-  ];
+  const handleInputChange = (field: any, value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
-  const handleSkillToggle = (skillName: string) => {
-    setSelectedSkills(prev =>
-      prev.includes(skillName)
-        ? prev.filter(skill => skill !== skillName)
-        : [...prev, skillName]
+  const handleQuestionChange = (index: any, field: any, value: any) => {
+    const updatedQuestions = formData.additionalQuestions.map((q, i) =>
+      i === index ? { ...q, [field]: value } : q
     );
+    setFormData((prev) => ({
+      ...prev,
+      additionalQuestions: updatedQuestions,
+    }));
   };
 
   const handleAddQuestion = () => {
-    setAdditionalQuestions([...additionalQuestions, { question: '', required: false }]);
-  };
-
-  const handleQuestionChange = (index: number, field: 'question' | 'required', value: string | boolean) => {
-    setAdditionalQuestions(prev =>
-      prev.map((q, i) =>
-        i === index
-          ? { ...q, [field]: value }
-          : q
-      )
-    );
+    setFormData((prev) => ({
+      ...prev,
+      additionalQuestions: [...prev.additionalQuestions, { question: "", required: false }],
+    }));
   };
 
   const handleNext = () => {
@@ -54,6 +70,87 @@ const CreateJobPosting = () => {
     setCurrentStep(currentStep - 1);
   };
 
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+
+      // Generate a unique ID for the job
+      const jobId = `job-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Get the current timestamp
+      const currentTime = new Date().toISOString();
+
+      if (!wallet.account?.address) return;
+      // Transform the form data into the JobDetails format
+      const jobData: JobDetails = {
+        id: jobId,
+        title: formData.title,
+        description: formData.description,
+        longDescription: formData.description, // You might want to add a separate field for this
+        budget: `${formData.budgetType} - ${formData.amount}`,
+        time_posted: currentTime,
+        category: "Design & Creative", // You might want to make this dynamic
+        expertise: formData.experienceLevel,
+        proposals: 0, // Initialize with 0 proposals
+        client_rating: 0, // You might want to get this from the user's profile 
+        client_location: "Remote", // You might want to get this from the user's profile
+        jobType: formData.budgetType,
+        project_length: formData.duration,
+        weeklyHours: formData.budgetType === "Hourly" ? "To be discussed" : undefined,
+        skills: selectedSkills,
+        activityOn: currentTime,
+        client_history: {
+          jobsPosted: 1, // You might want to get this from the user's profile
+          hireRate: 0, // You might want to get this from the user's profile
+          totalSpent: "$0", // You might want to get this from the user's profile
+          memberSince: currentTime, // You might want to get this from the user's profile
+          suiAddress: wallet.account?.address.toLowerCase(),
+          verificationStatus: {
+            payment: true,
+            phone: true,
+            email: true,
+          }
+        },
+        attachments: formData.attachments.map(attachment => attachment.toString()),
+        questions: formData.additionalQuestions
+          .filter(q => q.question.trim() !== '')
+          .map(q => q.question),
+      };
+
+      // Submit the job data to the API
+      const response = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(jobData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create job posting');
+      }
+
+      const createdJob = await response.json();
+      toast({
+        variant: "destructive",
+        title: "Posted Successfully",
+        description: "View in your Jobs section.",
+        className: "bg-green-500 text-white",
+      })
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Handle successful submission
+      // You might want to redirect to the job detail page or show a success message
+      window.location.href = `/jobs/${createdJob.id}`;
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      console.error('Error creating job posting:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return (
     <div className="max-w-3xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Post a Project</h1>
@@ -69,6 +166,8 @@ const CreateJobPosting = () => {
               </label>
               <input
                 type="text"
+                value={formData.title}
+                onChange={(e) => handleInputChange("title", e.target.value)}
                 placeholder="e.g., Build a Modern E-commerce Website"
                 className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -80,6 +179,8 @@ const CreateJobPosting = () => {
               </label>
               <textarea
                 rows={6}
+                value={formData.description}
+                onChange={(e) => handleInputChange("description", e.target.value)}
                 placeholder="Describe your project in detail..."
                 className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -104,7 +205,7 @@ const CreateJobPosting = () => {
         {currentStep === 2 && (
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">Step 2: Required Skills</h2>
-            <CreateJobPostingStep2 handlePrevious={handlePrevious} handleNext={handleNext} />
+            <CreateJobPostingStep2 handlePrevious={handlePrevious} handleNext={handleNext} setSelectedSkills={setSelectedSkills} selectedSkills={selectedSkills} />
           </section>
         )}
 
@@ -117,7 +218,10 @@ const CreateJobPosting = () => {
                 <label className="block text-sm font-medium mb-2">
                   Budget Type
                 </label>
-                <select className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <select
+                  value={formData.budgetType}
+                  onChange={(e) => handleInputChange("budgetType", e.target.value)}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <option>Fixed Price</option>
                   <option>Hourly Rate</option>
                 </select>
@@ -131,6 +235,8 @@ const CreateJobPosting = () => {
                   <input
                     type="number"
                     placeholder="Enter amount"
+                    value={formData.amount}
+                    onChange={(e) => handleInputChange("amount", e.target.value)}
                     className="w-full pl-10 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -165,7 +271,9 @@ const CreateJobPosting = () => {
                 <label className="block text-sm font-medium mb-2">
                   Duration
                 </label>
-                <select className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <select value={formData.duration}
+                  onChange={(e) => handleInputChange('duration', e.target.value)}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <option>Less than 1 month</option>
                   <option>1-3 months</option>
                   <option>3-6 months</option>
@@ -176,7 +284,9 @@ const CreateJobPosting = () => {
                 <label className="block text-sm font-medium mb-2">
                   Experience Level
                 </label>
-                <select className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <select value={formData.experienceLevel}
+                  onChange={(e) => handleInputChange('experienceLevel', e.target.value)}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                   <option>Entry Level</option>
                   <option>Intermediate</option>
                   <option>Expert</option>
@@ -217,6 +327,13 @@ const CreateJobPosting = () => {
                   className="hidden"
                   id="file-upload"
                   multiple
+                  onChange={(e) => {
+                    const files = e.target.files;
+                    if (files) {
+                      const filesArray = Array.from(files);
+                      handleInputChange('attachments', filesArray);
+                    }
+                  }}
                 />
                 <label
                   htmlFor="file-upload"
@@ -234,7 +351,7 @@ const CreateJobPosting = () => {
               <label className="block text-sm font-medium mb-2">
                 Additional Questions
               </label>
-              {additionalQuestions.map((q, index) => (
+              {formData.additionalQuestions.map((q, index) => (
                 <div key={index} className="flex items-center mb-2">
                   <input
                     type="text"
@@ -273,9 +390,11 @@ const CreateJobPosting = () => {
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300"
               >
-                Post Project
+                {isSubmitting ? 'Posting Job...' : 'Post Job'}
               </button>
             </div>
           </section>

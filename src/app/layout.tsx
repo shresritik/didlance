@@ -4,6 +4,8 @@ import { WalletProvider } from '@suiet/wallet-kit';
 import "./globals.css";
 import Navbar from "@/components/Nav";
 import '@suiet/wallet-kit/style.css';
+import { JobsProvider } from "@/hooks/useJobs";
+import { Toaster } from '@/components/ui/toaster';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -29,9 +31,14 @@ export default function RootLayout({
       >
         <WalletProvider>
           <Navbar />
-          <div className="mt-16">
-            {children}
-          </div>
+
+          <JobsProvider>
+            <div className="mt-16">
+              {children}
+              <Toaster />
+            </div>
+
+          </JobsProvider>
         </WalletProvider>
       </body>
     </html>

@@ -21,99 +21,48 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { JobDetails } from '@/types/job-details';
+import { useJobs } from '@/hooks/useJobs';
+import { formatRelativeTime } from '@/lib/utils';
 
-interface JobDetails {
-	id: string;
-	title: string;
-	description: string;
-	longDescription: string;
-	budget: string;
-	timePosted: string;
-	category: string;
-	expertise: string;
-	proposals: number;
-	clientRating: number;
-	clientLocation: string;
-	jobType: string;
-	projectLength: string;
-	weeklyHours?: string;
-	skills: string[];
-	activityOn: string;
-	clientHistory: {
-		jobsPosted: number;
-		hireRate: number;
-		totalSpent: string;
-		memberSince: string;
-		verificationStatus: {
-			payment: boolean;
-			phone: boolean;
-			email: boolean;
-		}
-	};
-	attachments?: string[];
-	questions?: string[];
-}
 
 const JobPage = () => {
+
+	const { jobs } = useJobs();
 	const router = useRouter();
 	const params = useParams();
 	const [isSaved, setIsSaved] = useState(false);
+	const [job, setJob] = useState<JobDetails>();
 	const [isApplying, setIsApplying] = useState(false);
-	const [job, setJob] = useState<JobDetails | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		// In a real app, fetch job data based on params.jobId
-		// This is mock data for demonstration
-		setJob({
-			id: params?.jobId as string,
-			title: 'Senior Smart Contract Developer Needed for DeFi Protocol',
-			description: 'Looking for an experienced developer to create and audit smart contracts...',
-			longDescription: `We are seeking a senior-level smart contract developer to join our team in building a revolutionary DeFi protocol on the Sui network. The ideal candidate will have extensive experience with Move programming language and a deep understanding of blockchain security principles.
+		const fetchJobDetails = async () => {
+			try {
+				setIsLoading(true);
 
-      Key Responsibilities:
-      • Design and implement complex smart contracts for our DeFi protocol
-      • Conduct thorough security audits and implement best practices
-      • Optimize gas efficiency and transaction costs
-      • Collaborate with the frontend team for seamless integration
-      • Participate in code reviews and provide technical documentation
-      
-      Required Technical Skills:
-      • Proven experience with Move programming language
-      • Deep understanding of DeFi protocols and mechanics
-      • Experience with smart contract security and common vulnerabilities
-      • Strong knowledge of blockchain fundamentals
-      • Familiarity with testing frameworks and deployment procedures`,
-			budget: '$1,000 - $2,000',
-			timePosted: '2 hours ago',
-			category: 'Blockchain Development',
-			expertise: 'Expert',
-			proposals: 12,
-			clientRating: 4.8,
-			clientLocation: 'United States',
-			jobType: 'Fixed-price',
-			projectLength: '1 to 3 months',
-			weeklyHours: '30+ hrs/week',
-			activityOn: 'Last viewed: 2 minutes ago',
-			skills: ['Move', 'Smart Contracts', 'Blockchain', 'Sui Network', 'DeFi', 'Solidity'],
-			clientHistory: {
-				jobsPosted: 15,
-				hireRate: 85,
-				totalSpent: '$50,000+',
-				memberSince: 'Jan 2022',
-				verificationStatus: {
-					payment: true,
-					phone: true,
-					email: true
+				// Check if jobs exist and the jobId parameter is valid
+				if (jobs && params?.jobId) {
+					// Find the job with the matching jobId
+					const foundJob = jobs.find((job) => job.id === params.jobId);
+
+					if (foundJob) {
+						setJob(foundJob); // Set the job details
+					} else {
+						setError("Job not found.");
+					}
 				}
-			},
-			questions: [
-				'How many years of experience do you have with Move programming?',
-				'Have you completed any DeFi projects in the past?',
-				'What security measures do you implement in your smart contracts?'
-			]
-		});
-		setIsLoading(false);
+			} catch (err) {
+				setError("An error occurred while fetching job details.");
+			} finally {
+				setIsLoading(false); // End loading state
+			}
+		};
+
+		if (params?.jobId) {
+			fetchJobDetails();
+		}
 	}, [params?.jobId]);
 
 	const handleApply = () => {
@@ -195,11 +144,11 @@ const JobPage = () => {
 												</span>
 												<span className="flex items-center gap-1">
 													<Clock className="w-4 h-4" />
-													Posted {job.timePosted}
+													Posted {formatRelativeTime(job.time_posted)}
 												</span>
 												<span className="flex items-center gap-1">
 													<Globe className="w-4 h-4" />
-													{job.clientLocation}
+													{job.client_location}
 												</span>
 											</div>
 
@@ -219,7 +168,7 @@ const JobPage = () => {
 												<div className="space-y-2">
 													<div className="flex items-center gap-2">
 														<Calendar className="w-4 h-4" />
-														<span>{job.projectLength}</span>
+														<span>{job.project_length}</span>
 													</div>
 													{job.weeklyHours && (
 														<div className="flex items-center gap-2">
@@ -240,7 +189,7 @@ const JobPage = () => {
 									</CardHeader>
 									<CardContent>
 										<div className="prose max-w-none">
-											<p className="whitespace-pre-line">{job.longDescription}</p>
+											<p className="whitespace-pre-line">{job.description}</p>
 										</div>
 									</CardContent>
 								</Card>
@@ -338,18 +287,18 @@ const JobPage = () => {
 								{/* Verification Status */}
 								<div className="space-y-2">
 									<div className="flex items-center gap-2">
-										{job.clientHistory.verificationStatus.payment && (
+										{job.client_history.verificationStatus.payment && (
 											<Shield className="w-4 h-4 text-green-500" />
 										)}
 										<span className="text-sm">Payment verified</span>
 									</div>
 									<div className="flex items-center gap-2">
 										<Star className="w-4 h-4 text-yellow-400" />
-										<span className="text-sm">{job.clientRating} rating</span>
+										<span className="text-sm">{job.client_rating} rating</span>
 									</div>
 									<div className="flex items-center gap-2">
 										<Flag className="w-4 h-4" />
-										<span className="text-sm">Member since {job.clientHistory.memberSince}</span>
+										<span className="text-sm">Member since {formatRelativeTime(job.client_history.memberSince)}  </span>
 									</div>
 								</div>
 
@@ -359,18 +308,18 @@ const JobPage = () => {
 								<div className="space-y-4">
 									<div>
 										<p className="text-sm font-medium">Jobs Posted</p>
-										<p className="text-2xl font-semibold">{job.clientHistory.jobsPosted}</p>
+										<p className="text-2xl font-semibold">{job.client_history.jobsPosted}</p>
 									</div>
 									<div>
 										<p className="text-sm font-medium">Hire Rate</p>
 										<div className="space-y-2">
-											<p className="text-2xl font-semibold">{job.clientHistory.hireRate}%</p>
-											<Progress value={job.clientHistory.hireRate} className="h-2" />
+											<p className="text-2xl font-semibold">{job.client_history.hireRate}%</p>
+											<Progress value={job.client_history.hireRate} className="h-2" />
 										</div>
 									</div>
 									<div>
 										<p className="text-sm font-medium">Total Spent</p>
-										<p className="text-2xl font-semibold">{job.clientHistory.totalSpent}</p>
+										<p className="text-2xl font-semibold">{job.client_history.totalSpent}</p>
 									</div>
 								</div>
 							</CardContent>

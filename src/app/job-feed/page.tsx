@@ -1,6 +1,6 @@
 "use client"
-import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,51 +12,21 @@ import {
   Star,
   Filter
 } from 'lucide-react';
-
-// Job interface for TypeScript
-interface Job {
-  id: string;
-  title: string;
-  description: string;
-  budget: string;
-  timePosted: string;
-  category: string;
-  expertise: string;
-  proposals: number;
-  clientRating: number;
-}
+import { JobDetails } from '@/types/job-details';
+import { formatRelativeTime } from '@/lib/utils';
+import { useJobs } from '@/hooks/useJobs';
 
 
 const JobFeed = () => {
   const router = useRouter();
+  const { jobs, setJobs } = useJobs();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  // Sample job data - in real app, this would come from an API
-  const jobs: Job[] = [
-    {
-      id: '1',
-      title: 'Smart Contract Developer Needed',
-      description: 'Looking for an experienced developer to create and audit smart contracts on Sui network...',
-      budget: '$1,000 - $2,000',
-      timePosted: '2 hours ago',
-      category: 'Blockchain',
-      expertise: 'Expert',
-      proposals: 12,
-      clientRating: 4.8
-    },
-    {
-      id: '2',
-      title: 'DeFi Protocol Integration',
-      description: 'Need help integrating various DeFi protocols into our existing platform...',
-      budget: '$2,000 - $4,000',
-      timePosted: '5 hours ago',
-      category: 'DeFi',
-      expertise: 'Intermediate',
-      proposals: 8,
-      clientRating: 4.5
-    }
-  ];
   const filteredJobs = jobs.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -67,6 +37,45 @@ const JobFeed = () => {
   const handleJobClick = (jobId: string) => {
     router.push(`/jobs/${jobId}`);
   };
+  const getJobFeed = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Construct the URL with search parameters
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '10',
+        ...(selectedCategory !== 'all' && { category: selectedCategory }),
+        ...(searchTerm && { search: searchTerm })
+      });
+
+      const response = await fetch(`/api/jobs?${params}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch jobs');
+      }
+
+      const data = await response.json();
+      console.log(data);
+
+      // If it's the first page, replace the jobs array
+      // If it's a subsequent page, append to the existing jobs
+      setJobs(prevJobs => page === 1 ? data.jobs : [...prevJobs, ...data.jobs]);
+
+      // Update hasMore based on whether we received fewer items than requested
+      setHasMore(data.jobs.length === 10);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setPage(1)
+    getJobFeed();
+  }, [searchTerm, selectedCategory]);
 
   return (
     <>
@@ -118,13 +127,13 @@ const JobFeed = () => {
                         <h3 className="text-xl font-semibold">{job.title}</h3>
                         <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
                           <Clock className="w-4 h-4" />
-                          <span>{job.timePosted}</span>
+                          <span>{formatRelativeTime(job.time_posted)}</span>
                           <span>•</span>
                           <Briefcase className="w-4 h-4" />
                           <span>{job.category}</span>
                           <span>•</span>
                           <Star className="w-4 h-4" />
-                          <span>{job.clientRating}</span>
+                          <span>{job.client_rating}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
