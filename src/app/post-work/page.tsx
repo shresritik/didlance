@@ -81,10 +81,12 @@ const CreateJobPosting = () => {
       // Get the current timestamp
       const currentTime = new Date().toISOString();
 
-      if (!wallet.account?.address) return;
+      const walletAddress = wallet.account?.address
+      if (!walletAddress) return;
       // Transform the form data into the JobDetails format
       const jobData: JobDetails = {
         id: jobId,
+        sui_address: walletAddress.toLowerCase(),
         title: formData.title,
         description: formData.description,
         longDescription: formData.description, // You might want to add a separate field for this
@@ -105,7 +107,6 @@ const CreateJobPosting = () => {
           hireRate: 0, // You might want to get this from the user's profile
           totalSpent: "$0", // You might want to get this from the user's profile
           memberSince: currentTime, // You might want to get this from the user's profile
-          suiAddress: wallet.account?.address.toLowerCase(),
           verificationStatus: {
             payment: true,
             phone: true,

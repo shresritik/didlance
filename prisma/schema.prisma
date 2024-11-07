@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("NEON_DATABASE_URL")
+}
+
+model PushSubscription {
+  id           String   @id @default(cuid())
+  sui_address   String  @unique// Store user's Sui wallet address
+  subscription String   // Store push notification subscription
+  createdAt    DateTime @default(now())
+  @@index([sui_address])
+}
+
+model Notification {
+  id             String   @id @default(cuid())
+  sui_address     String   // Recipient's Sui wallet address
+  title          String
+  message        String
+  type           String   // job_application, proposal_accepted, payment_received, etc.
+  metadata       Json?    // Store additional data like jobId, proposalId, etc.
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  @@index([sui_address])
+}
+
+model job_details {
+  id               String   @id
+  sui_address       String   // Job poster's Sui wallet address
+  title            String
+  description      String
+  long_description String
+  budget           String
+  time_posted      String
+  category         String
+  expertise        String
+  proposals        Int
+  client_rating    Decimal  @db.Decimal
+  client_location  String
+  job_type         String
+  project_length   String
+  weekly_hours     String?
+  skills           String[]
+  activity_on      String
+  client_history   Json
+  attachments      String[]
+  questions        String[]
+  @@index([sui_address])
+}

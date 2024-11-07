@@ -28,6 +28,7 @@ const Navbar = () => {
 	const wallet = useWallet();
 	const router = useRouter();
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+	const [address, setAddress] = useState<string>("");
 	const [isClientMode, setIsClientMode] = useState(false);
 	useEffect(() => {
 		console.log(wallet);
@@ -40,9 +41,19 @@ const Navbar = () => {
 		} else {
 			router.push("/job-feed")
 		}
+	}, [isClientMode, wallet, router]);
 
-	}, [isClientMode, wallet])
 
+	// Modified useEffect for address tracking
+	useEffect(() => {
+		if (wallet.address) {
+			setAddress(wallet.address);
+			console.log("Address updated:", wallet.address);
+		} else {
+			setAddress("");
+			console.log("Address not available");
+		}
+	}, [wallet.address]); // Only depend on wallet.address
 
 	const handleClick = (action: string) => {
 		switch (action) {
@@ -99,7 +110,7 @@ const Navbar = () => {
 					{/* Right section */}
 					<div className="flex items-center space-x-4">
 
-						<NotificationDialog />
+						<NotificationDialog suiAddress={address} />
 
 						<div className="relative">
 							{wallet.connected && wallet.account ? (

@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import { useJobs } from '@/hooks/useJobs';
+import { useWallet } from '@suiet/wallet-kit';
+import { notifyJobApplication } from '@/lib/utils';
 
 interface Milestone {
 	id: string;
@@ -39,6 +41,7 @@ const JobApplicationPage = () => {
 	const router = useRouter();
 	const params = useParams();
 	const { jobs } = useJobs();
+	const wallet = useWallet();
 	const [job, setJob] = useState<JobDetails | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [bidType, setBidType] = useState<'fixed' | 'milestone'>('fixed');
@@ -128,6 +131,9 @@ const JobApplicationPage = () => {
 		// Add your submission logic here
 
 		// Redirect after submission
+		// Push notification
+		notifyJobApplication(job?.sui_address!, wallet?.address!, job?.title!, job?.id!);
+		//freelancer address jobtitle job id
 		if (isDraft) {
 			router.push('/proposals/drafts');
 		} else {

@@ -18,6 +18,7 @@ const ClientHistorySchema = z.object({
 
 const JobDetailsSchema = z.object({
   id: z.string(),
+  sui_address: z.string(),
   title: z.string(),
   description: z.string(),
   longDescription: z.string(),
@@ -52,6 +53,7 @@ class JobDetailsDB {
     const createTableQuery = `
       CREATE TABLE IF NOT EXISTS job_details (
         id TEXT PRIMARY KEY,
+        sui_address TEXT NOT NULL,
         title TEXT NOT NULL,
         description TEXT NOT NULL,
         long_description TEXT NOT NULL,
@@ -84,18 +86,19 @@ class JobDetailsDB {
 
       const query = `
         INSERT INTO job_details (
-          id, title, description, long_description, budget, 
+          id,sui_address, title, description, long_description, budget, 
           time_posted, category, expertise, proposals, 
           client_rating, client_location, job_type, 
           project_length, weekly_hours, skills, activity_on, 
           client_history, attachments, questions
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
         RETURNING *
       `;
 
       const values = [
         validatedData.id,
+        validatedData.sui_address,
         validatedData.title,
         validatedData.description,
         validatedData.longDescription,

@@ -1,5 +1,6 @@
 export interface JobDetails {
 	id: string;
+	sui_address: string;
 	title: string;
 	description: string;
 	longDescription: string;
@@ -16,9 +17,6 @@ export interface JobDetails {
 	skills: string[];
 	activityOn: string;
 	client_history: {
-
-
-		suiAddress: string;
 		jobsPosted: number;
 		hireRate: number;
 		totalSpent: string;
