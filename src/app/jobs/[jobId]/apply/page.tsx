@@ -132,16 +132,35 @@ const JobApplicationPage = () => {
 		console.log('Submitting proposal:', proposal);
 		// Add your submission logic here
 
+
+
+		// Redirect after submission
+		const currentProposals = Array.isArray(job?.proposals) ? job.proposals : [];
+		const updatedProposals = [...currentProposals, wallet?.address];
+		const updateResponse = await fetch(`/api/jobs/${job?.id}`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ proposals: updatedProposals }),
+		});
+		if (!updateResponse.ok) {
+			const errorData = await updateResponse.json();
+			console.error('Failed to add proposal:', errorData.error);
+			return;
+		}
+
+		const updatedJob = await updateResponse.json();
+		console.log('Proposal added successfully:', updatedJob);
+		// Push notification
 		toast({
 			variant: "destructive",
 			title: "Job Applied Successfully",
 			description: "View in your Jobs section.",
 			className: "bg-green-500 text-white",
 		})
-
-		// Redirect after submission
-		// Push notification
 		notifyJobApplication(job?.sui_address!, wallet?.address!, job?.title!, job?.id!);
+
 		//freelancer address jobtitle job id
 		if (isDraft) {
 			router.push('/proposals/drafts');

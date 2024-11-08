@@ -151,7 +151,7 @@ const JobFeed = () => {
                         </Button>
                       </div>
                       <div className="text-sm text-gray-500">
-                        {job.proposals} proposals
+                        {job.proposals.length} proposals
                       </div>
                     </div>
                   </div>

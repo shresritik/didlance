@@ -1,3 +1,4 @@
+
 // public/serviceWorker.js
 let notificationCount = 0;
 
@@ -75,3 +76,4 @@ self.addEventListener('notificationclick', event => {
 		clients.openWindow(url)
 	);
 });
+

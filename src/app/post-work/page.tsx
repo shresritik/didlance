@@ -2,8 +2,7 @@
 import React, { useState } from 'react';
 import { DollarSign, AlertCircle } from 'lucide-react';
 import CreateJobPostingStep2 from '@/components/Skills/index';
-import { JobDetails } from '@/types/job-details';
-import { Button } from '@/components/ui/button';
+import { JobDetails, JobStatus } from '@/types/job-details';
 import { useToast } from '@/hooks/use-toast';
 
 import { useWallet } from '@suiet/wallet-kit';
@@ -16,7 +15,6 @@ const CreateJobPosting = () => {
   const wallet = useWallet();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([
@@ -89,19 +87,20 @@ const CreateJobPosting = () => {
         sui_address: walletAddress.toLowerCase(),
         title: formData.title,
         description: formData.description,
-        longDescription: formData.description, // You might want to add a separate field for this
+        long_description: formData.description, // You might want to add a separate field for this
         budget: `${formData.budgetType} - ${formData.amount}`,
         time_posted: currentTime,
         category: "Design & Creative", // You might want to make this dynamic
         expertise: formData.experienceLevel,
-        proposals: 0, // Initialize with 0 proposals
+        proposals: [], // Initialize with 0 proposals
         client_rating: 0, // You might want to get this from the user's profile 
         client_location: "Remote", // You might want to get this from the user's profile
-        jobType: formData.budgetType,
+        job_type: formData.budgetType,
         project_length: formData.duration,
-        weeklyHours: formData.budgetType === "Hourly" ? "To be discussed" : undefined,
+        weekly_hours: formData.budgetType === "Hourly" ? "To be discussed" : "40 hours",
         skills: selectedSkills,
-        activityOn: currentTime,
+        activity_on: currentTime,
+        job_status: JobStatus.OPEN,
         client_history: {
           jobsPosted: 1, // You might want to get this from the user's profile
           hireRate: 0, // You might want to get this from the user's profile

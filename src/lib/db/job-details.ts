@@ -15,25 +15,26 @@ const ClientHistorySchema = z.object({
   memberSince: z.string(),
   verificationStatus: VerificationStatusSchema,
 });
-
+const JobStatus = z.enum(['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']);
 const JobDetailsSchema = z.object({
   id: z.string(),
   sui_address: z.string(),
   title: z.string(),
   description: z.string(),
-  longDescription: z.string(),
+  long_description: z.string(),
   budget: z.string(),
   time_posted: z.string(),
   category: z.string(),
   expertise: z.string(),
-  proposals: z.number(),
-  client_rating: z.number(),
+  proposals: z.array(z.string()).optional(),
+  client_rating: z.coerce.number(),
   client_location: z.string(),
-  jobType: z.string(),
+  job_type: z.string(),
   project_length: z.string(),
-  weeklyHours: z.string().optional(),
+  weekly_hours: z.string().nullable(),
   skills: z.array(z.string()),
-  activityOn: z.string(),
+  activity_on: z.string(),
+  job_status: JobStatus,
   client_history: ClientHistorySchema,
   attachments: z.array(z.string()).optional(),
   questions: z.array(z.string()).optional(),
@@ -61,7 +62,7 @@ class JobDetailsDB {
         time_posted TEXT NOT NULL,
         category TEXT NOT NULL,
         expertise TEXT NOT NULL,
-        proposals INTEGER NOT NULL,
+        proposals TEXT[],
         client_rating NUMERIC NOT NULL,
         client_location TEXT NOT NULL,
         job_type TEXT NOT NULL,
@@ -86,13 +87,13 @@ class JobDetailsDB {
 
       const query = `
         INSERT INTO job_details (
-          id,sui_address, title, description, long_description, budget, 
+          id, sui_address, title, description, long_description, budget, 
           time_posted, category, expertise, proposals, 
           client_rating, client_location, job_type, 
-          project_length, weekly_hours, skills, activity_on, 
+          project_length, weekly_hours, skills, activity_on, job_status,
           client_history, attachments, questions
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
         RETURNING *
       `;
 
@@ -101,7 +102,7 @@ class JobDetailsDB {
         validatedData.sui_address,
         validatedData.title,
         validatedData.description,
-        validatedData.longDescription,
+        validatedData.long_description,
         validatedData.budget,
         validatedData.time_posted,
         validatedData.category,
@@ -109,11 +110,12 @@ class JobDetailsDB {
         validatedData.proposals,
         validatedData.client_rating,
         validatedData.client_location,
-        validatedData.jobType,
+        validatedData.job_type,
         validatedData.project_length,
-        validatedData.weeklyHours,
+        validatedData.weekly_hours,
         validatedData.skills,
-        validatedData.activityOn,
+        validatedData.activity_on,
+        validatedData.job_status,
         JSON.stringify(validatedData.client_history),
         validatedData.attachments,
         validatedData.questions,
@@ -145,6 +147,15 @@ class JobDetailsDB {
     });
   }
 
+  async getJobUsingAddress(id: string): Promise<JobDetails[] | null> {
+    const query = 'SELECT * FROM job_details WHERE sui_address = $1';
+    const result = await this.pool.query(query, [id]);
+    if (result.rows.length === 0) {
+      return null;
+    }
+    return result.rows;
+  }
+
   // Update a job
   async updateJob(id: string, jobDetails: Partial<JobDetails>): Promise<JobDetails | null> {
     try {
@@ -154,6 +165,8 @@ class JobDetailsDB {
       }
 
       const updatedJob = { ...currentJob, ...jobDetails };
+
+      console.log(updatedJob);
       const validatedData = JobDetailsSchema.parse(updatedJob);
 
       const query = `
@@ -173,18 +186,19 @@ class JobDetailsDB {
           project_length = $12,
           weekly_hours = $13,
           skills = $14,
-          activity_on = $15,
-          client_history = $16,
-          attachments = $17,
-          questions = $18
-        WHERE id = $19
+          job_status = $15,
+          activity_on = $16,
+          client_history = $17,
+          attachments = $18,
+          questions = $19
+        WHERE id = $20
         RETURNING *
       `;
 
       const values = [
         validatedData.title,
         validatedData.description,
-        validatedData.longDescription,
+        validatedData.long_description,
         validatedData.budget,
         validatedData.time_posted,
         validatedData.category,
@@ -192,12 +206,13 @@ class JobDetailsDB {
         validatedData.proposals,
         validatedData.client_rating,
         validatedData.client_location,
-        validatedData.jobType,
+        validatedData.job_type,        // Changed from jobType
         validatedData.project_length,
-        validatedData.weeklyHours,
+        validatedData.weekly_hours,    // Changed from weeklyHours
         validatedData.skills,
-        validatedData.activityOn,
-        JSON.stringify(validatedData.client_history),
+        validatedData.job_status,      // Moved to correct position
+        validatedData.activity_on,     // Changed from activityOn
+        validatedData.client_history,  // Removed JSON.stringify()
         validatedData.attachments,
         validatedData.questions,
         id

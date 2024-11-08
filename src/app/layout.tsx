@@ -8,14 +8,14 @@ import { JobsProvider } from "@/hooks/useJobs";
 import { Toaster } from '@/components/ui/toaster';
 
 const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
+  src: "./fonts/Lato-Light.ttf",
+  variable: "--font-lato-sans",
   weight: "100 900",
 });
 
 const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
+  src: "./fonts/Lato-Regular.ttf",
+  variable: "--font-lato-mono",
   weight: "100 900",
 });
 
@@ -27,13 +27,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} `}
       >
         <WalletProvider>
           <Navbar />
 
           <JobsProvider>
-            <div className="mt-16">
+            <div className="mt-16 --font-lato-mono" suppressHydrationWarning>
               {children}
               <Toaster />
             </div>

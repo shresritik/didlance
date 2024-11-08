@@ -65,6 +65,8 @@ export function urlBase64ToUint8Array(base64String: string) {
   }
   return outputArray
 }
+
+// By client to freelancer saying proposal accepted
 export const notifyProposalAccepted = async (
   freelancerAddress: string,
   jobTitle: string,
@@ -90,6 +92,7 @@ export const notifyProposalAccepted = async (
   }
 }
 
+// for sending the job proposal request by the freelancer
 export const notifyJobApplication = async (
   jobOwnerAddress: string,
   freelancerAddress: string,

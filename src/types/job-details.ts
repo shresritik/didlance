@@ -3,19 +3,20 @@ export interface JobDetails {
 	sui_address: string;
 	title: string;
 	description: string;
-	longDescription: string;
+	long_description: string;
 	budget: string;
 	time_posted: string;
 	category: string;
 	expertise: string;
-	proposals: number;
+	proposals: String[];
 	client_rating: number;
 	client_location: string;
-	jobType: string;
+	job_type: string;
 	project_length: string;
-	weeklyHours?: string;
+	weekly_hours?: string;
 	skills: string[];
-	activityOn: string;
+	activity_on: string;
+	job_status: JobStatus;
 	client_history: {
 		jobsPosted: number;
 		hireRate: number;
@@ -29,4 +30,10 @@ export interface JobDetails {
 	};
 	attachments?: string[];
 	questions?: string[];
+}
+export enum JobStatus {
+	OPEN = 'OPEN',
+	IN_PROGRESS = 'IN_PROGRESS',
+	COMPLETED = 'COMPLETED',
+	CANCELLED = 'CANCELLED',
 }

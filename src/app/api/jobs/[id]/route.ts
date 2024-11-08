@@ -29,7 +29,8 @@ export async function PUT(
 ) {
 	try {
 		const jobData = await request.json();
-		const updatedJob = await jobDetailsDB.updateJob(params.id, jobData);
+		const id = params.id as string;
+		const updatedJob = await jobDetailsDB.updateJob(id, jobData);
 		if (!updatedJob) {
 			return NextResponse.json(
 				{ error: 'Job not found' },

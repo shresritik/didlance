@@ -37,7 +37,7 @@ model job_details {
   time_posted      String
   category         String
   expertise        String
-  proposals        Int
+  proposals        String[] 
   client_rating    Decimal  @db.Decimal
   client_location  String
   job_type         String
@@ -48,5 +48,13 @@ model job_details {
   client_history   Json
   attachments      String[]
   questions        String[]
+  job_status JobStatus @default(OPEN)
   @@index([sui_address])
+}
+
+enum JobStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }

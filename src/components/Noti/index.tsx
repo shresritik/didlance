@@ -196,7 +196,7 @@ const NotificationDialog: React.FC<NotificationDialogProps> = ({ suiAddress }) =
 								>
 									<div className="flex justify-between items-start">
 										<h4 className="text-sm font-medium">{notification.title}</h4>
-										<span className="text-xs text-gray-500">
+										<span className="text-xs text-gray-500" suppressHydrationWarning={true}>
 											{format(new Date(notification.createdAt), 'MMM d, h:mm a')}
 										</span>
 									</div>

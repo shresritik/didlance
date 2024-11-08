@@ -35,12 +35,6 @@ const Navbar = () => {
 		console.log('wallet status', wallet.status)
 		console.log('connected wallet name', wallet.name)
 		console.log('connected account info', wallet.account)
-
-		if (isClientMode) {
-			router.push("/post-work")
-		} else {
-			router.push("/job-feed")
-		}
 	}, [isClientMode, wallet, router]);
 
 
@@ -76,6 +70,11 @@ const Navbar = () => {
 	}
 	const handleToggle = (checked: boolean) => {
 		setIsClientMode(checked);
+		if (checked) {
+			router.push("/post-work")
+		} else {
+			router.push("/job-feed")
+		}
 	};
 	return (
 		<nav className="border-b border-gray-200 bg-white fixed w-full top-0 z-50">
@@ -121,7 +120,7 @@ const Navbar = () => {
 												{addressEllipsis(wallet.account.address)}
 											</p>
 										</div>
-										<img
+										<img suppressHydrationWarning={true}
 											className="h-8 w-8 rounded-full"
 											src={getRandomDigitalArt()}
 											alt="Profile"

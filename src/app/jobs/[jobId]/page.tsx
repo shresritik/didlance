@@ -92,7 +92,7 @@ const JobPage = () => {
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-50 p-6">
+		<div className="min-h-screen bg-gray-50 p-6 --font-lato-sans">
 			<div className="max-w-6xl mx-auto space-y-6">
 				{/* Navigation */}
 				<nav className="flex items-center space-x-4 text-sm">
@@ -114,7 +114,7 @@ const JobPage = () => {
 						<Tabs defaultValue="description" className="space-y-4">
 							<TabsList>
 								<TabsTrigger value="description">Job Details</TabsTrigger>
-								<TabsTrigger value="proposals">{job.proposals} Proposals</TabsTrigger>
+								<TabsTrigger value="proposals">{job.proposals.length} Proposals</TabsTrigger>
 							</TabsList>
 
 							<TabsContent value="description" className="space-y-6">
@@ -142,7 +142,7 @@ const JobPage = () => {
 													<Terminal className="w-4 h-4" />
 													{job.category}
 												</span>
-												<span className="flex items-center gap-1">
+												<span className="flex items-center gap-1" suppressHydrationWarning={true}>
 													<Clock className="w-4 h-4" />
 													Posted {formatRelativeTime(job.time_posted)}
 												</span>
@@ -170,10 +170,10 @@ const JobPage = () => {
 														<Calendar className="w-4 h-4" />
 														<span>{job.project_length}</span>
 													</div>
-													{job.weeklyHours && (
+													{job.weekly_hours && (
 														<div className="flex items-center gap-2">
 															<Clock className="w-4 h-4" />
-															<span>{job.weeklyHours}</span>
+															<span>{job.weekly_hours}</span>
 														</div>
 													)}
 												</div>
@@ -268,10 +268,10 @@ const JobPage = () => {
 
 									<div className="space-y-3">
 										<p className="text-sm text-gray-500">
-											{job.proposals} proposals
+											{job.proposals.length} proposals
 										</p>
 										<p className="text-sm text-gray-500">
-											{job.activityOn}
+											{job.activity_on}
 										</p>
 									</div>
 								</div>
@@ -298,7 +298,7 @@ const JobPage = () => {
 									</div>
 									<div className="flex items-center gap-2">
 										<Flag className="w-4 h-4" />
-										<span className="text-sm">Member since {formatRelativeTime(job.client_history.memberSince)}  </span>
+										<span className="text-sm" suppressHydrationWarning>Member since {formatRelativeTime(job.client_history.memberSince)}  </span>
 									</div>
 								</div>
 
