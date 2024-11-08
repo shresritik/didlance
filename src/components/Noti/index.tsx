@@ -12,7 +12,7 @@ import {
 import { Bell } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Notification } from '@/types/notification';
-import { urlBase64ToUint8Array } from '@/lib/utils';
+import { formatNotificationDate, urlBase64ToUint8Array } from '@/lib/utils';
 
 interface NotificationDialogProps {
 	suiAddress: string;
@@ -28,16 +28,20 @@ const NotificationDialog: React.FC<NotificationDialogProps> = ({ suiAddress }) =
 			const messageHandler = (event: MessageEvent) => {
 				if (event.data && event.data.type === 'NOTIFICATION_COUNT_UPDATE') {
 					setUnreadCount(event.data.count);
+					console.log(event.data.data);
+					const notification = event.data.data.data;
+					setNotifications((prevNotifications) => [...prevNotifications, notification]);
 				}
 			};
 
 			navigator.serviceWorker.addEventListener('message', messageHandler);
+			console.log(notifications);
 
 			return () => {
 				navigator.serviceWorker.removeEventListener('message', messageHandler);
 			};
 		}
-	}, []);
+	}, [notifications]);
 
 	useEffect(() => {
 		if (suiAddress && 'serviceWorker' in navigator && 'PushManager' in window) {
@@ -190,14 +194,14 @@ const NotificationDialog: React.FC<NotificationDialogProps> = ({ suiAddress }) =
 						<div className="space-y-4 p-4">
 							{notifications.map((notification) => (
 								<div
-									key={notification.id}
+									key={notification.createdAt}
 									className={`p-4 rounded-lg border ${notification.isRead ? 'bg-white' : 'bg-blue-50'}`}
 									onClick={() => markAsRead(notification.id)}
 								>
 									<div className="flex justify-between items-start">
 										<h4 className="text-sm font-medium">{notification.title}</h4>
 										<span className="text-xs text-gray-500" suppressHydrationWarning={true}>
-											{format(new Date(notification.createdAt), 'MMM d, h:mm a')}
+											{formatNotificationDate(notification.createdAt)}
 										</span>
 									</div>
 									<p className="text-sm text-gray-600 mt-1">{notification.message}</p>

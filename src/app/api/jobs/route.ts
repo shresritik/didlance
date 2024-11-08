@@ -12,7 +12,6 @@ export async function GET(request: NextRequest) {
 			const results = await jobDetailsDB.getJobUsingAddress(suiAddress);
 			return NextResponse.json(results);
 		}
-
 		// Otherwise, handle the regular search case
 		const page = parseInt(searchParams.get('page') || '1');
 		const limit = parseInt(searchParams.get('limit') || '10');

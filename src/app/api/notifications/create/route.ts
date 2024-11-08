@@ -13,7 +13,7 @@ webpush.setVapidDetails(
 export async function POST(request: NextRequest) {
 	try {
 		// Parse request body
-		const { sui_address, title, message, type, metadata } = await request.json();
+		const { sui_address, title, message, type, metadata, createdAt } = await request.json();
 
 		// Validate required fields
 		if (!sui_address || !title || !message) {
@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Attempt to send the push notification
+		//sui_address, title, message, type, metadata
 		try {
 			const sendResult: SendResult = await webpush.sendNotification(
 				JSON.parse(pushSubscription.subscription),
@@ -56,7 +57,11 @@ export async function POST(request: NextRequest) {
 					data: {
 						url: `/notifications`,
 						type,
-						metadata
+						metadata,
+						sui_address,
+						title,
+						message,
+						createdAt,
 					},
 					unreadCount // Include unread count in the push notification
 				})

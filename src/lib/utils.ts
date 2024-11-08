@@ -1,6 +1,7 @@
 "use client"
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import dayjs from 'dayjs'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -100,6 +101,7 @@ export const notifyJobApplication = async (
   jobId: string
 ) => {
   try {
+    const date = new Date().toISOString()
     await fetch('/api/notifications/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -108,6 +110,7 @@ export const notifyJobApplication = async (
         title: 'New Job Application',
         message: `A freelancer has applied for "${jobTitle}"`,
         type: 'job_application',
+        createdAt: date,
         metadata: {
           jobId,
           freelancerAddress,
@@ -119,3 +122,7 @@ export const notifyJobApplication = async (
     console.error('Failed to send notification:', error)
   }
 }
+
+export const formatNotificationDate = (createdAt: string) => {
+  return dayjs(createdAt).format('MMM D, h:mm A');
+};

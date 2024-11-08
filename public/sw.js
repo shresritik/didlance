@@ -1,4 +1,3 @@
-
 // public/serviceWorker.js
 let notificationCount = 0;
 
@@ -12,7 +11,7 @@ self.addEventListener('activate', event => {
 	event.waitUntil(self.clients.claim());
 });
 
-const updateBadgeAndNotifyClients = async (count) => {
+const updateBadgeAndNotifyClients = async (count, data) => {
 	notificationCount = count;
 
 	// Update badge
@@ -33,7 +32,8 @@ const updateBadgeAndNotifyClients = async (count) => {
 	clients.forEach(client => {
 		client.postMessage({
 			type: 'NOTIFICATION_COUNT_UPDATE',
-			count: count
+			count: count,
+			data: data
 		});
 	});
 };
@@ -44,7 +44,7 @@ self.addEventListener('push', event => {
 
 	// If it's just a badge update, don't show notification
 	if (data.type === 'BADGE_UPDATE') {
-		event.waitUntil(updateBadgeAndNotifyClients(data.unreadCount));
+		event.waitUntil(updateBadgeAndNotifyClients(data.unreadCount, data));
 		return;
 	}
 
@@ -53,7 +53,9 @@ self.addEventListener('push', event => {
 		data: {
 			url: data.data.url,
 			type: data.data.type,
-			metadata: data.data.metadata
+			metadata: data.data.metadata,
+			isRead: false,
+			createdAt: data.data.createdAt,
 		},
 		icon: '/icon.png',
 		badge: '/badge.png',
@@ -63,7 +65,7 @@ self.addEventListener('push', event => {
 	event.waitUntil(
 		Promise.all([
 			self.registration.showNotification(data.title, options),
-			updateBadgeAndNotifyClients(data.unreadCount)
+			updateBadgeAndNotifyClients(data.unreadCount, data)
 		])
 	);
 });
@@ -76,4 +78,3 @@ self.addEventListener('notificationclick', event => {
 		clients.openWindow(url)
 	);
 });
-
