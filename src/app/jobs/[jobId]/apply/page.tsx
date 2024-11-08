@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { JobDetails } from '@/types/job-details';
+import { useToast } from '@/hooks/use-toast';
 import {
 	Select,
 	SelectContent,
@@ -42,6 +43,7 @@ const JobApplicationPage = () => {
 	const params = useParams();
 	const { jobs } = useJobs();
 	const wallet = useWallet();
+	const { toast } = useToast();
 	const [job, setJob] = useState<JobDetails | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [bidType, setBidType] = useState<'fixed' | 'milestone'>('fixed');
@@ -130,6 +132,13 @@ const JobApplicationPage = () => {
 		console.log('Submitting proposal:', proposal);
 		// Add your submission logic here
 
+		toast({
+			variant: "destructive",
+			title: "Job Applied Successfully",
+			description: "View in your Jobs section.",
+			className: "bg-green-500 text-white",
+		})
+
 		// Redirect after submission
 		// Push notification
 		notifyJobApplication(job?.sui_address!, wallet?.address!, job?.title!, job?.id!);
@@ -137,7 +146,7 @@ const JobApplicationPage = () => {
 		if (isDraft) {
 			router.push('/proposals/drafts');
 		} else {
-			router.push('/proposals/submitted');
+			router.push('/my-jobs');
 		}
 	};
 

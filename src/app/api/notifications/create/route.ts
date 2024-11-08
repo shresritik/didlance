@@ -1,3 +1,4 @@
+// app/api/notifications/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import webpush, { SendResult } from 'web-push';
@@ -24,6 +25,14 @@ export async function POST(request: NextRequest) {
 			data: { sui_address, title, message, type, metadata },
 		});
 
+		// Get unread notification count
+		const unreadCount = await prisma.notification.count({
+			where: {
+				sui_address,
+				isRead: false
+			}
+		});
+
 		// Get the push subscription for the Sui address
 		const pushSubscription = await prisma.pushSubscription.findFirst({
 			where: { sui_address },
@@ -44,22 +53,92 @@ export async function POST(request: NextRequest) {
 				JSON.stringify({
 					title,
 					body: message,
-					data: { url: `/notifications` },
+					data: {
+						url: `/notifications`,
+						type,
+						metadata
+					},
+					unreadCount // Include unread count in the push notification
 				})
 			);
 			console.log('Push notification sent:', sendResult);
 		} catch (error) {
 			console.error('Push notification failed:', error);
+			if (error instanceof Error && error.name === 'ExpiredSubscriptionError') {
+				// Delete expired subscription
+				await prisma.pushSubscription.delete({
+					where: { id: pushSubscription.id }
+				});
+			}
 			return NextResponse.json({
 				message: 'Error sending push notification',
 				notification,
 			}, { status: 500 });
 		}
 
-		return NextResponse.json(notification, { status: 201 });
+		return NextResponse.json({
+			notification,
+			unreadCount
+		}, { status: 201 });
 	} catch (error) {
 		console.error('Error creating notification:', error);
 		return NextResponse.json({ message: 'Error creating notification' }, { status: 500 });
 	}
 }
 
+// Add endpoint to mark notifications as read
+export async function PATCH(request: NextRequest) {
+	try {
+		const { sui_address, notification_ids } = await request.json();
+
+		if (!sui_address) {
+			return NextResponse.json({ message: 'Missing sui_address' }, { status: 400 });
+		}
+
+		const updateQuery = notification_ids
+			? { id: { in: notification_ids } }
+			: {}; // If no IDs provided, prepare to update all
+
+		await prisma.notification.updateMany({
+			where: {
+				sui_address,
+				...updateQuery
+			},
+			data: {
+				isRead: true
+			}
+		});
+
+		// Get updated unread count
+		const unreadCount = await prisma.notification.count({
+			where: {
+				sui_address,
+				isRead: false
+			}
+		});
+
+		// Get push subscription to send update
+		const pushSubscription = await prisma.pushSubscription.findFirst({
+			where: { sui_address },
+		});
+
+		if (pushSubscription) {
+			try {
+				await webpush.sendNotification(
+					JSON.parse(pushSubscription.subscription),
+					JSON.stringify({
+						type: 'BADGE_UPDATE',
+						unreadCount
+					})
+				);
+			} catch (error) {
+				console.error('Error sending badge update:', error);
+			}
+		}
+
+		return NextResponse.json({ success: true, unreadCount }, { status: 200 });
+	} catch (error) {
+		console.error('Error marking notifications as read:', error);
+		return NextResponse.json({ message: 'Error updating notifications' }, { status: 500 });
+	}
+}

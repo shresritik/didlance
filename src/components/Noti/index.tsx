@@ -24,10 +24,34 @@ const NotificationDialog: React.FC<NotificationDialogProps> = ({ suiAddress }) =
 	const [open, setOpen] = useState(false);
 
 	useEffect(() => {
-		if ('serviceWorker' in navigator && 'PushManager' in window) {
-			registerServiceWorker({ suiAddress });
-			requestNotificationPermission();
-			fetchNotifications();
+		if ('serviceWorker' in navigator) {
+			const messageHandler = (event: MessageEvent) => {
+				if (event.data && event.data.type === 'NOTIFICATION_COUNT_UPDATE') {
+					setUnreadCount(event.data.count);
+				}
+			};
+
+			navigator.serviceWorker.addEventListener('message', messageHandler);
+
+			return () => {
+				navigator.serviceWorker.removeEventListener('message', messageHandler);
+			};
+		}
+	}, []);
+
+	useEffect(() => {
+		if (suiAddress && 'serviceWorker' in navigator && 'PushManager' in window) {
+			const initNotifications = async () => {
+				try {
+					await requestNotificationPermission();
+					await registerServiceWorker({ suiAddress });
+					await fetchNotifications();
+				} catch (error) {
+					console.error('Error initializing notifications:', error);
+				}
+			};
+
+			initNotifications();
 		}
 	}, [suiAddress]);
 
@@ -85,25 +109,54 @@ const NotificationDialog: React.FC<NotificationDialogProps> = ({ suiAddress }) =
 
 	const fetchNotifications = async () => {
 		try {
-			if (!suiAddress) {
-				console.log("No Sui address provided");
-				return;
-			}
-			const response = await fetch(`/api/notifications/get?sui_address=${suiAddress}`);
-			const data = await response.json();
+			const response = await fetch(`/api/notifications/get?sui_address=${suiAddress.toLowerCase()}`);
+			if (!response.ok) {
 
+				throw new Error('Failed to fetch notifications');
+			}
+			const data = await response.json();
+			setUnreadCount(data.length);
 			setNotifications(data);
-			setUnreadCount(data.filter((n: Notification) => !n.isRead).length);
+
+			// Update badge if supported
+			if ('setAppBadge' in navigator) {
+				if (data.unreadCount > 0) {
+					await navigator.setAppBadge(data.unreadCount);
+				} else {
+					await navigator.clearAppBadge();
+				}
+			}
 		} catch (error) {
-			console.error('Failed to fetch notifications:', error);
+			console.error('Error fetching notifications:', error);
 		}
 	};
 
-	const markAsRead = async (notificationId: string) => {
+	const markAsRead = async (notificationId?: string) => {
 		try {
-			await fetch(`/api/notifications/${notificationId}/read`, { method: 'PUT' });
-			setNotifications(notifications.map(n => n.id === notificationId ? { ...n, isRead: true } : n));
-			setUnreadCount(prev => Math.max(0, prev - 1));
+			const response = await fetch('/api/notifications/create', {
+				method: 'PATCH',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					sui_address: suiAddress, // Make sure you have access to walletAddress
+					notification_ids: notificationId ? [notificationId] : undefined
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to update notification');
+			}
+
+			const { unreadCount } = await response.json();
+
+			// Update local state
+			setNotifications(notifications.map(n =>
+				notificationId
+					? (n.id === notificationId ? { ...n, isRead: true } : n)
+					: { ...n, isRead: true }
+			));
+			setUnreadCount(unreadCount);
 		} catch (error) {
 			console.error('Failed to mark notification as read:', error);
 		}

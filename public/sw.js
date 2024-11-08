@@ -1,3 +1,6 @@
+// public/serviceWorker.js
+let notificationCount = 0;
+
 self.addEventListener('install', event => {
 	console.log('Service Worker installed');
 	self.skipWaiting();
@@ -5,34 +8,70 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
 	console.log('Service Worker activated');
+	event.waitUntil(self.clients.claim());
 });
 
-self.addEventListener('push', event => {
-	console.log('Push event received:', event);
+const updateBadgeAndNotifyClients = async (count) => {
+	notificationCount = count;
 
-	const { title, body, url } = event.data.json();
+	// Update badge
+	if ('setAppBadge' in navigator) {
+		try {
+			if (count > 0) {
+				await navigator.setAppBadge(count);
+			} else {
+				await navigator.clearAppBadge();
+			}
+		} catch (error) {
+			console.error('Error updating badge:', error);
+		}
+	}
+
+	// Notify all clients about the new count
+	const clients = await self.clients.matchAll();
+	clients.forEach(client => {
+		client.postMessage({
+			type: 'NOTIFICATION_COUNT_UPDATE',
+			count: count
+		});
+	});
+};
+
+self.addEventListener('push', event => {
+	const data = event.data.json();
+	console.log('Push event received:', data);
+
+	// If it's just a badge update, don't show notification
+	if (data.type === 'BADGE_UPDATE') {
+		event.waitUntil(updateBadgeAndNotifyClients(data.unreadCount));
+		return;
+	}
 
 	const options = {
-		body,
-		data: { url },
-		// icon: '/icon.png', // Commented out since you don't have the image
-		// badge: '/badge.png', // Commented out since you don't have the image
+		body: data.body,
+		data: {
+			url: data.data.url,
+			type: data.data.type,
+			metadata: data.data.metadata
+		},
+		icon: '/icon.png',
+		badge: '/badge.png',
+		tag: 'notification-count',
 	};
 
 	event.waitUntil(
-		self.registration.showNotification(title, options)
+		Promise.all([
+			self.registration.showNotification(data.title, options),
+			updateBadgeAndNotifyClients(data.unreadCount)
+		])
 	);
 });
 
 self.addEventListener('notificationclick', event => {
 	event.notification.close();
 	const url = event.notification.data.url || '/';
+
 	event.waitUntil(
 		clients.openWindow(url)
 	);
-});
-
-self.addEventListener('fetch', event => {
-	console.log('Fetch event:', event);
-	event.respondWith(fetch(event.request));
 });

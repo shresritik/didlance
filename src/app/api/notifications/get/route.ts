@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 	try {
 		// Fetch notifications from the database for the provided sui_address
 		const notifications = await prisma.notification.findMany({
-			where: { sui_address: suiAddress },
+			where: { sui_address: suiAddress, isRead: false },
 			orderBy: { createdAt: 'desc' },
 		});
 
