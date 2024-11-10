@@ -9,6 +9,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { JobDetails } from '@/types/job-details';
 import { useToast } from '@/hooks/use-toast';
+import { IProposal } from '@/types/proposal';
+import { IProposalAnswer } from '@/types/proposal';
 import {
 	Select,
 	SelectContent,
@@ -32,7 +34,7 @@ import { notifyJobApplication } from '@/lib/utils';
 interface Milestone {
 	id: string;
 	description: string;
-	dueDate: string;
+	due_date: string;
 	amount: number;
 }
 
@@ -53,6 +55,7 @@ const JobApplicationPage = () => {
 	const [projectDuration, setProjectDuration] = useState('');
 	const [coverLetter, setCoverLetter] = useState('');
 	const [milestones, setMilestones] = useState<Milestone[]>([]);
+	const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 	const [answers, setAnswers] = useState<Record<string, string>>({});
 	const [isBoost, setIsBoost] = useState(false);
 	const [isDraft, setIsDraft] = useState(false);
@@ -99,7 +102,7 @@ const JobApplicationPage = () => {
 		const newMilestone: Milestone = {
 			id: Date.now().toString(),
 			description: '',
-			dueDate: '',
+			due_date: '',
 			amount: 0
 		};
 		setMilestones([...milestones, newMilestone]);
@@ -115,7 +118,70 @@ const JobApplicationPage = () => {
 		));
 	};
 
+	const handleProposalSubmit = async (isDraft: boolean = false) => {
+		try {
+			setIsSubmitting(true);
+
+			if (wallet?.address === undefined || params?.job) return;
+			const proposal: IProposal = {
+				freelancer_address: wallet?.address, // Your Sui wallet address
+				jobId: params?.jobId as string,
+				bid_type: bidType === 'milestone' ? 'MILESTONE' : 'FIXED',
+				total_bid: parseFloat(totalBid),
+				project_duration: projectDuration,
+				cover_letter: coverLetter,
+				milestones: bidType === 'milestone' ? milestones : [],
+				answers: Object.entries(answers).map(([question, answer]) => ({
+					question,
+					answer,
+				})),
+				is_boost: isBoost,
+				is_draft: isDraft
+			};
+
+			const response = await fetch('/api/proposals', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(proposal)
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to submit proposal');
+			}
+
+			const result = await response.json();
+			toast({
+				variant: "destructive",
+				title: `${isDraft ? 'Proposal saved as draft' : 'Proposal submitted successfully'}`,
+				description: "View in your Jobs section.",
+				className: "bg-green-500 text-white",
+			})
+
+			router.push(`/my-proposals`);
+		} catch (error) {
+			console.error('Error submitting proposal:', error);
+			toast({
+				variant: "destructive",
+				title: "Failed to submit purposal. Please try again.",
+				description: "View in your Jobs section.",
+				className: "bg-red-500 text-white",
+			})
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
 	const handleSubmit = async (isDraft: boolean = false) => {
+		if (job?.sui_address.toLowerCase() === wallet?.address) {
+			toast({
+				variant: "destructive",
+				title: "You are the client of the project.",
+				description: "Failed to submit purposal.",
+				className: "bg-red-500 text-white",
+			})
+			return;
+
+		}
 		setIsDraft(isDraft);
 		const proposal = {
 			jobId: params?.jobId,
@@ -132,6 +198,7 @@ const JobApplicationPage = () => {
 		console.log('Submitting proposal:', proposal);
 		// Add your submission logic here
 
+		await handleProposalSubmit(isDraft);
 
 
 		// Redirect after submission
@@ -295,8 +362,8 @@ const JobApplicationPage = () => {
 														<Label>Due Date</Label>
 														<Input
 															type="date"
-															value={milestone.dueDate}
-															onChange={(e) => updateMilestone(milestone.id, 'dueDate', e.target.value)}
+															value={milestone.due_date}
+															onChange={(e) => updateMilestone(milestone.id, 'due_date', e.target.value)}
 														/>
 													</div>
 													<div className="flex-1">

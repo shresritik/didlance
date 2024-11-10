@@ -66,7 +66,6 @@ export async function POST(request: NextRequest) {
 					unreadCount // Include unread count in the push notification
 				})
 			);
-			console.log('Push notification sent:', sendResult);
 		} catch (error) {
 			console.error('Push notification failed:', error);
 			if (error instanceof Error && error.name === 'ExpiredSubscriptionError') {

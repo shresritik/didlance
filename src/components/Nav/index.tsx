@@ -94,6 +94,9 @@ const Navbar = () => {
 								<Link href="/my-jobs" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
 									My Jobs
 								</Link>
+								<Link href="/my-proposals" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+									My Proposals
+								</Link>
 								<Link href="/messages" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
 									Messages
 								</Link>
@@ -180,6 +183,13 @@ const Navbar = () => {
 													onClick={() => setMobileMenuOpen(false)}
 												>
 													My Jobs
+												</Link>
+												<Link
+													href="/my-proposals"
+													className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+													onClick={() => setMobileMenuOpen(false)}
+												>
+													My Proposals
 												</Link>
 												<Link
 													href="/messages"

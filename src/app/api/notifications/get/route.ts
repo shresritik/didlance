@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
-	console.log("from GET method"); // Confirm that this is reached
 
 	// Get the `sui_address` from query parameters
 	const suiAddress = request.nextUrl.searchParams.get('sui_address')?.toLowerCase();

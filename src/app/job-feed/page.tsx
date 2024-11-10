@@ -57,7 +57,6 @@ const JobFeed = () => {
       }
 
       const data = await response.json();
-      console.log(data);
 
       // If it's the first page, replace the jobs array
       // If it's a subsequent page, append to the existing jobs

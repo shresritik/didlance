@@ -1,3 +1,5 @@
+import { IProposal } from "./proposal";
+
 export interface JobDetails {
 	id: string;
 	sui_address: string;
@@ -30,6 +32,7 @@ export interface JobDetails {
 	};
 	attachments?: string[];
 	questions?: string[];
+	job_proposals?: IProposal[] // Relation to proposals
 }
 export enum JobStatus {
 	OPEN = 'OPEN',
