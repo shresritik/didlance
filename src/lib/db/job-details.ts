@@ -1,5 +1,5 @@
-import { Pool } from '@neondatabase/serverless';
-import { z } from 'zod'; // Note: You'll need to install zod separately
+import { Pool } from "@neondatabase/serverless";
+import { z } from "zod"; // Note: You'll need to install zod separately
 
 // Zod schema for validation
 const VerificationStatusSchema = z.object({
@@ -15,7 +15,7 @@ const ClientHistorySchema = z.object({
   memberSince: z.string(),
   verificationStatus: VerificationStatusSchema,
 });
-const JobStatus = z.enum(['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']);
+const JobStatus = z.enum(["OPEN", "IN_PROGRESS", "COMPLETED", "CANCELLED"]);
 const JobDetailsSchema = z.object({
   id: z.string(),
   sui_address: z.string(),
@@ -133,7 +133,7 @@ class JobDetailsDB {
 
   // Get a job by ID
   async getJob(id: string): Promise<JobDetails | null> {
-    const query = 'SELECT * FROM job_details WHERE id = $1';
+    const query = "SELECT * FROM job_details WHERE id = $1";
     const result = await this.pool.query(query, [id]);
 
     if (result.rows.length === 0) {
@@ -141,14 +141,14 @@ class JobDetailsDB {
     }
 
     const job = result.rows[0];
-    return ({
+    return {
       ...job,
       clientHistory: job.client_history,
-    });
+    };
   }
 
   async getJobUsingAddress(id: string): Promise<JobDetails[] | null> {
-    const query = 'SELECT * FROM job_details WHERE sui_address = $1';
+    const query = "SELECT * FROM job_details WHERE sui_address = $1";
     const result = await this.pool.query(query, [id]);
     if (result.rows.length === 0) {
       return null;
@@ -157,7 +157,10 @@ class JobDetailsDB {
   }
 
   // Update a job
-  async updateJob(id: string, jobDetails: Partial<JobDetails>): Promise<JobDetails | null> {
+  async updateJob(
+    id: string,
+    jobDetails: Partial<JobDetails>
+  ): Promise<JobDetails | null> {
     try {
       const currentJob = await this.getJob(id);
       if (!currentJob) {
@@ -206,16 +209,16 @@ class JobDetailsDB {
         validatedData.proposals,
         validatedData.client_rating,
         validatedData.client_location,
-        validatedData.job_type,        // Changed from jobType
+        validatedData.job_type, // Changed from jobType
         validatedData.project_length,
-        validatedData.weekly_hours,    // Changed from weeklyHours
+        validatedData.weekly_hours, // Changed from weeklyHours
         validatedData.skills,
-        validatedData.job_status,      // Moved to correct position
-        validatedData.activity_on,     // Changed from activityOn
-        validatedData.client_history,  // Removed JSON.stringify()
+        validatedData.job_status, // Moved to correct position
+        validatedData.activity_on, // Changed from activityOn
+        validatedData.client_history, // Removed JSON.stringify()
         validatedData.attachments,
         validatedData.questions,
-        id
+        id,
       ];
 
       const result = await this.pool.query(query, values);
@@ -230,12 +233,10 @@ class JobDetailsDB {
 
   // Delete a job
   async deleteJob(id: string): Promise<boolean> {
-    const query = 'DELETE FROM job_details WHERE id = $1 RETURNING id';
+    const query = "DELETE FROM job_details WHERE id = $1 RETURNING id";
     const result = await this.pool.query(query, [id]);
     return result.rows.length > 0;
   }
-
-
 
   async searchJobs(
     searchParams: {
@@ -246,7 +247,7 @@ class JobDetailsDB {
     page: number = 1,
     limit: number = 10
   ): Promise<{ jobs: JobDetails[]; total: number }> {
-    let conditions: string[] = ['1=1'];
+    let conditions: string[] = ["1=1"];
     const values: any[] = [];
     let valueIndex = 1;
 
@@ -275,7 +276,7 @@ class JobDetailsDB {
     const query = `
     SELECT *, COUNT(*) OVER() as total_count
     FROM job_details
-    WHERE ${conditions.join(' AND ')}
+    WHERE ${conditions.join(" AND ")}
     ORDER BY time_posted DESC
     LIMIT $${valueIndex} OFFSET $${valueIndex + 1}
   `;
@@ -286,7 +287,7 @@ class JobDetailsDB {
     const result = await this.pool.query(query, values);
     const total = result.rows[0]?.total_count || 0;
 
-    const jobs = result.rows.map(row => ({
+    const jobs = result.rows.map((row) => ({
       ...row,
       clientHistory: row.client_history,
     }));
