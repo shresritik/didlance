@@ -1,10 +1,10 @@
-"use client"
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-import dayjs from 'dayjs'
+"use client";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import dayjs from "dayjs";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 const digitalArtUrls = [
   "https://picsum.photos/seed/art1/32/32",
@@ -34,17 +34,17 @@ export function formatRelativeTime(dateString: string): string {
 
   // Just now: less than 1 minute ago
   if (diffInSecs < 60) {
-    return 'just now';
+    return "just now";
   }
 
   // Minutes: 1-59 minutes ago
   if (diffInMins < 60) {
-    return diffInMins === 1 ? '1 min ago' : `${diffInMins} mins ago`;
+    return diffInMins === 1 ? "1 min ago" : `${diffInMins} mins ago`;
   }
 
   // Hours: 1-23 hours ago
   if (diffInHours < 24) {
-    return diffInHours === 1 ? '1 hr ago' : `${diffInHours} hrs ago`;
+    return diffInHours === 1 ? "1 hr ago" : `${diffInHours} hrs ago`;
   }
 
   // Days: 1+ days ago
@@ -54,17 +54,17 @@ export function formatRelativeTime(dateString: string): string {
 // Helper function to convert VAPID key
 
 export function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding)
-    .replace(/-/g, '+') // Replace '-' with '+'
-    .replace(/_/g, '/'); // Replace '_' with '/'
-  const rawData = window.atob(base64)
-  const outputArray = new Uint8Array(rawData.length)
+    .replace(/-/g, "+") // Replace '-' with '+'
+    .replace(/_/g, "/"); // Replace '_' with '/'
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
 
   for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i)
+    outputArray[i] = rawData.charCodeAt(i);
   }
-  return outputArray
+  return outputArray;
 }
 
 // By client to freelancer saying proposal accepted
@@ -74,24 +74,24 @@ export const notifyProposalAccepted = async (
   jobId: string
 ) => {
   try {
-    await fetch('/api/notifications/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    await fetch("/api/notifications/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         sui_address: freelancerAddress,
-        title: 'Proposal Accepted',
+        title: "Proposal Accepted",
         message: `Your proposal for "${jobTitle}" has been accepted!`,
-        type: 'proposal_accepted',
+        type: "proposal_accepted",
         metadata: {
           jobId,
           jobTitle,
         },
       }),
-    })
+    });
   } catch (error) {
-    console.error('Failed to send notification:', error)
+    console.error("Failed to send notification:", error);
   }
-}
+};
 
 // for sending the job proposal request by the freelancer
 export const notifyJobApplication = async (
@@ -101,15 +101,15 @@ export const notifyJobApplication = async (
   jobId: string
 ) => {
   try {
-    const date = new Date().toISOString()
-    await fetch('/api/notifications/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const date = new Date().toISOString();
+    await fetch("/api/notifications/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         sui_address: jobOwnerAddress,
-        title: 'New Job Application',
+        title: "New Job Application",
         message: `A freelancer has applied for "${jobTitle}"`,
-        type: 'job_application',
+        type: "job_application",
         createdAt: date,
         metadata: {
           jobId,
@@ -117,12 +117,21 @@ export const notifyJobApplication = async (
           jobTitle,
         },
       }),
-    })
+    });
   } catch (error) {
-    console.error('Failed to send notification:', error)
+    console.error("Failed to send notification:", error);
   }
-}
+};
 
 export const formatNotificationDate = (createdAt: string) => {
-  return dayjs(createdAt).format('MMM D, h:mm A');
+  return dayjs(createdAt).format("MMM D, h:mm A");
 };
+
+export function truncateHex(hexString: string) {
+  if (hexString.length <= 14) {
+    return hexString; // Return as is if the string is too short to truncate
+  }
+  const prefix = hexString.slice(0, 6);
+  const suffix = hexString.slice(-4);
+  return `${prefix}....${suffix}`;
+}

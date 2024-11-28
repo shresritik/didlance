@@ -38,6 +38,7 @@ const JobDetailsSchema = z.object({
   client_history: ClientHistorySchema,
   attachments: z.array(z.string()).optional(),
   questions: z.array(z.string()).optional(),
+  userId: z.string().optional(),
 });
 
 type JobDetails = z.infer<typeof JobDetailsSchema>;
@@ -91,9 +92,9 @@ class JobDetailsDB {
           time_posted, category, expertise, proposals, 
           client_rating, client_location, job_type, 
           project_length, weekly_hours, skills, activity_on, job_status,
-          client_history, attachments, questions
+          client_history, attachments, questions, "userId"
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
         RETURNING *
       `;
 
@@ -119,6 +120,7 @@ class JobDetailsDB {
         JSON.stringify(validatedData.client_history),
         validatedData.attachments,
         validatedData.questions,
+        validatedData.userId,
       ];
 
       const result = await this.pool.query(query, values);
@@ -169,7 +171,6 @@ class JobDetailsDB {
 
       const updatedJob = { ...currentJob, ...jobDetails };
 
-      console.log(updatedJob);
       const validatedData = JobDetailsSchema.parse(updatedJob);
 
       const query = `
@@ -193,8 +194,9 @@ class JobDetailsDB {
           activity_on = $16,
           client_history = $17,
           attachments = $18,
-          questions = $19
-        WHERE id = $20
+          questions = $19,
+          "userId" = $20
+        WHERE id = $21
         RETURNING *
       `;
 
@@ -218,6 +220,7 @@ class JobDetailsDB {
         validatedData.client_history, // Removed JSON.stringify()
         validatedData.attachments,
         validatedData.questions,
+        validatedData.userId,
         id,
       ];
 
