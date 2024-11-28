@@ -1,11 +1,11 @@
-"use client"
+"use client";
 import localFont from "next/font/local";
-import { WalletProvider } from '@suiet/wallet-kit';
+import { WalletProvider } from "@suiet/wallet-kit";
 import "./globals.css";
 import Navbar from "@/components/Nav";
-import '@suiet/wallet-kit/style.css';
+import "@suiet/wallet-kit/style.css";
 import { JobsProvider } from "@/hooks/useJobs";
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
   src: "./fonts/Lato-Light.ttf",
@@ -26,9 +26,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} `}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} `}>
         <WalletProvider>
           <Navbar />
 
@@ -37,7 +35,6 @@ export default function RootLayout({
               {children}
               <Toaster />
             </div>
-
           </JobsProvider>
         </WalletProvider>
       </body>
