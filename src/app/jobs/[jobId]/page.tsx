@@ -24,64 +24,92 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { JobDetails } from "@/types/job-details";
 import { useJobs } from "@/hooks/useJobs";
-import { formatRelativeTime, truncateHex } from "@/lib/utils";
+import { formatRelativeTime, queryClient, truncateHex } from "@/lib/utils";
 import { useWallet } from "@suiet/wallet-kit";
+import ProposalCard from "@/components/MyJob/ProposalCard";
+import { job_details, JobStatus, Proposal } from "@prisma/client";
+import Link from "next/link";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@radix-ui/react-select";
+import { useMutation, useQuery } from "@tanstack/react-query";
+
+type JobDetailsWithRelations = job_details & {
+  job_proposals: Proposal[];
+};
+
+type ClientHistory = Record<string, string> & {
+  verificationStatus?: {
+    payment: boolean;
+  };
+};
 
 const JobPage = () => {
   const { jobs } = useJobs();
   const router = useRouter();
   const params = useParams();
   const [isSaved, setIsSaved] = useState(false);
-  const [job, setJob] = useState<JobDetails>();
   const [isApplying, setIsApplying] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const wallet = useWallet();
-  useEffect(() => {
-    wallet.address === job?.sui_address
-      ? setIsApplying(true)
-      : setIsApplying(false);
-  }, [wallet, job]);
+  const [projectStatus, setProjectStatus] = useState<string>("");
 
-  useEffect(() => {
-    const fetchJobDetails = async () => {
-      try {
-        setIsLoading(true);
+  const fetchJobDetails = async (): Promise<JobDetailsWithRelations> => {
+    const data = await fetch("/api/jobs/" + params.jobId);
 
-        // Check if jobs exist and the jobId parameter is valid
-        if (jobs && params?.jobId) {
-          // Find the job with the matching jobId
-          const foundJob = jobs.find((job) => job.id === params.jobId);
+    return await data.json();
+  };
+  const { data: job, isLoading } = useQuery({
+    queryKey: ["job"],
+    queryFn: fetchJobDetails,
+  });
 
-          if (foundJob) {
-            setJob(foundJob); // Set the job details
-          } else {
-            setError("Job not found.");
-          }
-        }
-      } catch (err) {
-        setError("An error occurred while fetching job details.");
-      } finally {
-        setIsLoading(false); // End loading state
-      }
-    };
+  const updateJob = async (): Promise<any> => {
+    const data = await fetch("/api/jobs/" + job.id, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ job_status: projectStatus }),
+    });
+    return await data.json();
+  };
 
-    if (params?.jobId) {
-      fetchJobDetails();
-    }
-  }, [params?.jobId]);
+  const { mutate } = useMutation<void, Error, void>({
+    mutationFn: updateJob,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["job"] });
+    },
+  });
 
   const handleApply = () => {
     setIsApplying(true);
     // Add application logic here
-    setTimeout(() => {
-      router.push(`/jobs/${params?.jobId}/apply`);
-    }, 500);
+    // setTimeout(() => {
+    //   router.push(`/jobs/${params?.jobId}/apply`);
+    // }, 500);
   };
 
   const toggleSave = () => {
     setIsSaved(!isSaved);
   };
+  useEffect(() => {
+    if (!job) return;
+    wallet.address === job?.sui_address ||
+    !!job?.job_proposals.find((el) => el.sui_address === wallet.address)
+      ? setIsApplying(true)
+      : setIsApplying(false);
+  }, [wallet, job]);
+
+  const handleStatus = async () => {
+    mutate();
+  };
+  useEffect(() => {
+    if (job) setProjectStatus(job.job_status);
+  }, [job]);
 
   if (isLoading || !job) {
     return (
@@ -121,7 +149,7 @@ const JobPage = () => {
               <TabsList>
                 <TabsTrigger value="description">Job Details</TabsTrigger>
                 <TabsTrigger value="proposals">
-                  {job.proposals.length} Proposals
+                  {job.job_proposals?.length} Proposals
                 </TabsTrigger>
               </TabsList>
 
@@ -212,7 +240,7 @@ const JobPage = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {job.skills.map((skill) => (
+                      {job.skills?.map((skill) => (
                         <Badge key={skill} variant="secondary">
                           {skill}
                         </Badge>
@@ -260,27 +288,77 @@ const JobPage = () => {
             <Card className="sticky top-6">
               <CardContent className="p-6 space-y-6">
                 <div className="space-y-4">
-                  <Button
-                    className="w-full"
-                    onClick={handleApply}
-                    disabled={isApplying}
-                  >
-                    {"Apply Now"}
-                  </Button>
+                  {wallet.address === job.sui_address ? (
+                    <>
+                      <select
+                        defaultValue={job.job_status}
+                        onChange={(e) => setProjectStatus(e.target.value)}
+                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option
+                          className="bg-white w-full border-b px-5 my-2 "
+                          value="IN_PROGRESS"
+                        >
+                          IN PROGRESS
+                        </option>
+                        <option
+                          className="bg-white w-full border-b px-5 my-2 "
+                          value="OPEN"
+                        >
+                          OPEN
+                        </option>
+                        <option
+                          className="bg-white w-full border-b px-5 my-2 "
+                          value="COMPLETED"
+                        >
+                          COMPLETED
+                        </option>
+                        <option
+                          className="bg-white w-full border-b px-5 my-2 "
+                          value="CANCELLED"
+                        >
+                          CANCELLED
+                        </option>
+                      </select>
+                      <Button
+                        className="w-full"
+                        disabled={isLoading}
+                        onClick={handleStatus}
+                      >
+                        {"Update Status"}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        className="w-full"
+                        disabled={isApplying}
+                        onClick={handleApply}
+                      >
+                        <Link
+                          className="w-full"
+                          href={`/jobs/${params?.jobId}/apply`}
+                        >
+                          {" "}
+                          {"Apply Now"}
+                        </Link>
+                      </Button>
 
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={toggleSave}
-                  >
-                    {isSaved ? "Saved" : "Save Job"}
-                  </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={toggleSave}
+                      >
+                        {isSaved ? "Saved" : "Save Job"}
+                      </Button>
+                    </>
+                  )}
 
                   <Separator />
 
                   <div className="space-y-3">
                     <p className="text-sm text-gray-500">
-                      {job.proposals.length} proposals
+                      {job.job_proposals?.length} proposals
                     </p>
                     <p className="text-sm text-gray-500">{job.activity_on}</p>
                   </div>
@@ -303,20 +381,23 @@ const JobPage = () => {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {job.client_history.verificationStatus.payment && (
-                      <Shield className="w-4 h-4 text-green-500" />
-                    )}
+                    {(job.client_history as ClientHistory)?.verificationStatus
+                      .payment && <Shield className="w-4 h-4 text-green-500" />}
                     <span className="text-sm">Payment verified</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Star className="w-4 h-4 text-yellow-400" />
-                    <span className="text-sm">{job.client_rating} rating</span>
+                    <span className="text-sm">
+                      {job.client_rating as any} rating
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Flag className="w-4 h-4" />
                     <span className="text-sm" suppressHydrationWarning>
                       Member since{" "}
-                      {formatRelativeTime(job.client_history.memberSince)}{" "}
+                      {formatRelativeTime(
+                        (job.client_history as ClientHistory)?.memberSince
+                      )}{" "}
                     </span>
                   </div>
                 </div>
@@ -328,17 +409,20 @@ const JobPage = () => {
                   <div>
                     <p className="text-sm font-medium">Jobs Posted</p>
                     <p className="text-2xl font-semibold">
-                      {job.client_history.jobsPosted}
+                      {(job.client_history as ClientHistory)?.jobsPosted}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium">Hire Rate</p>
                     <div className="space-y-2">
                       <p className="text-2xl font-semibold">
-                        {job.client_history.hireRate}%
+                        {(job.client_history as ClientHistory)?.hireRate}%
                       </p>
                       <Progress
-                        value={job.client_history.hireRate}
+                        value={
+                          (job.client_history as ClientHistory)
+                            ?.hireRate as unknown as number
+                        }
                         className="h-2"
                       />
                     </div>
@@ -346,7 +430,7 @@ const JobPage = () => {
                   <div>
                     <p className="text-sm font-medium">Total Spent</p>
                     <p className="text-2xl font-semibold">
-                      {job.client_history.totalSpent}
+                      {(job.client_history as ClientHistory)?.totalSpent}
                     </p>
                   </div>
                 </div>
@@ -354,6 +438,27 @@ const JobPage = () => {
             </Card>
           </div>
         </div>
+        {wallet.address === job.sui_address && (
+          <div>
+            <CardTitle className="mb-5 ml-3">
+              Proposals: {job.job_proposals?.length}
+            </CardTitle>
+            {job.job_proposals.map((proposal: any) => {
+              const pr = {
+                ...proposal,
+                job: {
+                  title: job.title,
+                  description: job.description,
+                  budget: job.budget,
+                  project_length: job.project_length,
+                  skills: job.skills,
+                  status: job.job_status,
+                },
+              };
+              return <ProposalCard key={proposal.id} proposal={pr} />;
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

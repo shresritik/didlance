@@ -6,32 +6,26 @@ import jobDetailsDB from "@/lib/db/job-details";
 export async function POST(request: Request) {
   try {
     const data: IProposal = await request.json();
-    console.log("Received proposal data: ", data);
+    // console.log("Received proposal data: ", data);
 
     // Debug log
     const jobExists = await jobDetailsDB.getJob(data.jobId);
 
-    console.log("Found job:", jobExists); // Add this to see if job exists
-
     const result = await prisma.proposal.create({
       data: {
-        freelancer_address: data.freelancer_address.toLowerCase(),
+        User: {
+          connect: { sui_address: data.sui_address },
+        },
         job: {
           connect: { id: data.jobId },
         },
         bid_type: data.bid_type,
-        total_bid: data.total_bid,
+        total_bid: data.total_bid || 0,
         project_duration: data.project_duration,
         cover_letter: data.cover_letter,
         is_boost: data.is_boost,
         is_draft: data.is_draft,
         status: data.is_draft ? "DRAFT" : "PENDING",
-        user: {
-          connect: {
-            id: data.userId, // Ensure data.userId is defined and valid
-            sui_address: data.freelancer_address.toLowerCase(),
-          },
-        },
         answers: {
           createMany: {
             data: data.answers.map((answer) => ({
@@ -42,8 +36,6 @@ export async function POST(request: Request) {
         },
       },
     });
-
-    console.log("Created proposal:", result); // Add this to see created proposal
 
     //   // Create notification
     //   const notification = await tx.notification.create({
@@ -109,7 +101,7 @@ export async function GET(request: Request) {
     const proposals = await prisma.proposal.findMany({
       where: {
         ...(jobId && { jobId }),
-        ...(freelancerAddress && { freelancer_address: freelancerAddress }),
+        ...(freelancerAddress && { User: { sui_address: freelancerAddress } }),
       },
       select: {
         id: true,

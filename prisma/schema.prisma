@@ -8,8 +8,7 @@ datasource db {
 }
 
 model User {
-  id          String        @id @default(cuid())
-  sui_address String        @unique
+  sui_address String        @id @unique
   commit      Decimal       @db.Decimal(10, 2)
   job_id      job_details[]
   Proposal    Proposal[]
@@ -39,7 +38,6 @@ model Notification {
 
 model job_details {
   id               String     @id
-  sui_address      String
   title            String
   description      String
   long_description String
@@ -50,6 +48,7 @@ model job_details {
   proposals        String[]
   client_rating    Decimal    @db.Decimal
   client_location  String
+  min_stake        Int?       @default(0)
   job_type         String
   project_length   String
   weekly_hours     String?
@@ -60,8 +59,8 @@ model job_details {
   questions        String[]
   job_status       JobStatus  @default(OPEN)
   job_proposals    Proposal[] // Relation to proposals
-  userId           String // Foreign key referencing User's id
-  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User             User?      @relation(fields: [sui_address], references: [sui_address])
+  sui_address      String?
 
   @@index([sui_address])
 }
@@ -77,9 +76,6 @@ model Proposal {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // Freelancer info
-  freelancer_address String // Freelancer's Sui wallet address
 
   // Job relationship
   job   job_details @relation(fields: [jobId], references: [id])
@@ -97,13 +93,13 @@ model Proposal {
   status   ProposalStatus @default(PENDING)
 
   // Related data
-  milestones Milestone[]
-  answers    ProposalAnswer[]
-  userId     String // Foreign key referencing User's id
-  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  milestones  Milestone[]
+  answers     ProposalAnswer[]
+  User        User?            @relation(fields: [sui_address], references: [sui_address])
+  sui_address String?
 
-  @@unique([userId, jobId])
-  @@index([userId])
+  @@unique([sui_address, jobId])
+  @@index([sui_address])
   @@index([jobId])
 }
 

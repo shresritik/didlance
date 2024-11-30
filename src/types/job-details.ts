@@ -33,7 +33,7 @@ export interface JobDetails {
   attachments?: string[];
   questions?: string[];
   job_proposals?: IProposal[]; // Relation to proposals
-  userId?: string; // Relation to proposals
+  min_stake?: number;
 }
 export enum JobStatus {
   OPEN = "OPEN",

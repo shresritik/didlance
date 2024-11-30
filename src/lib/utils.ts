@@ -2,6 +2,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import dayjs from "dayjs";
+import { QueryClient } from "@tanstack/react-query";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -128,10 +129,22 @@ export const formatNotificationDate = (createdAt: string) => {
 };
 
 export function truncateHex(hexString: string) {
-  if (hexString.length <= 14) {
+  if (hexString?.length <= 14) {
     return hexString; // Return as is if the string is too short to truncate
   }
-  const prefix = hexString.slice(0, 6);
-  const suffix = hexString.slice(-4);
+  const prefix = hexString?.slice(0, 6);
+  const suffix = hexString?.slice(-4);
   return `${prefix}....${suffix}`;
 }
+
+export const getStatusColor = (status: string): string => {
+  const colors: { [key: string]: string } = {
+    DRAFT: "bg-gray-100 text-gray-800 cursor-pointer",
+    PENDING: "bg-yellow-100 text-yellow-800 cursor-pointer",
+    ACCEPTED: "bg-green-100 text-green-800 cursor-pointer",
+    REJECTED: "bg-red-100 text-red-800 cursor-pointer",
+  };
+  return colors[status] || "bg-gray-100 text-white cursor-pointer";
+};
+
+export const queryClient = new QueryClient();

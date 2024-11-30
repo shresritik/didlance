@@ -19,9 +19,10 @@ import {
   Users,
 } from "lucide-react";
 import { useWallet } from "@suiet/wallet-kit";
+import { useRouter } from "next/navigation";
 
 // Define types
-type JobStatus = "OPEN" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+export type JobStatus = "OPEN" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 
 interface ClientHistory {
   jobsPosted: number;
@@ -52,6 +53,7 @@ const MyJobs = () => {
   const [jobs, setJobs] = useState<JobDetails[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -139,7 +141,13 @@ const MyJobs = () => {
 
           <div className="space-y-4">
             {filteredJobs?.map((job) => (
-              <Card key={job.id} className="w-full">
+              <Card
+                key={job.id}
+                className="w-full cursor-pointer"
+                onClick={() => {
+                  router.push("/jobs/" + job.id);
+                }}
+              >
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>

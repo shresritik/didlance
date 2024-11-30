@@ -1,5 +1,7 @@
 "use client";
 
+import { truncateHex } from "@/lib/utils";
+import { useWallet } from "@suiet/wallet-kit";
 import { useEffect, useState } from "react";
 interface UserResponse {
   sui_address: string;
@@ -8,17 +10,15 @@ interface UserResponse {
 }
 export default function WalletDashboard() {
   const [response, setResponse] = useState<UserResponse | null>(null);
+  const wallet = useWallet();
   useEffect(() => {
     const useFetchUser = async () => {
-      const userId = localStorage.getItem("userId");
-      console.log(userId);
-      const data = await fetch("/api/users/" + userId);
+      const data = await fetch("/api/users/" + wallet.address);
       const res = await data.json();
       setResponse(res.message);
     };
-
-    useFetchUser();
-  }, []);
+    if (wallet.address) useFetchUser();
+  }, [wallet]);
   return (
     <div className="p-6 space-y-6 bg-gray-50 h-screen">
       {/* Wallets Section */}
@@ -37,7 +37,9 @@ export default function WalletDashboard() {
               <div>
                 <p className="font-medium">Sui Wallet</p>
 
-                <p className="text-sm text-gray-500">{response?.sui_address}</p>
+                <p className="text-sm text-gray-500">
+                  {response?.sui_address && truncateHex(response?.sui_address)}
+                </p>
               </div>
             </div>
             <p className="font-medium">{response?.commit} COMMIT</p>

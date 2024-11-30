@@ -4,17 +4,13 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const { sui_address, commit } = await request.json();
-    console.log({ sui_address, commit });
     const user = await prisma.user.findFirst({
       where: {
         sui_address,
       },
     });
     if (user) {
-      return NextResponse.json(
-        { error: "User already exists" },
-        { status: 500 }
-      );
+      return NextResponse.json({ message: user }, { status: 200 });
     }
     const data = await prisma.user.create({
       data: {

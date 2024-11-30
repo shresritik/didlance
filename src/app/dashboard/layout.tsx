@@ -1,10 +1,13 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 
 const layout = ({ children }) => {
+  const router = useRouter();
   const pathname = usePathname();
+  if (pathname === "/dashboard") router.push("/dashboard/my-jobs");
+
   return (
     <div className="flex w-full ">
       <div className="flex flex-col flex-[0.2]  p-5 border-r border-gray-200">

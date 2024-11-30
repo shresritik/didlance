@@ -1,6 +1,6 @@
 // types/proposal.ts
 export interface IProposal {
-  freelancer_address: string;
+  sui_address: string;
   jobId: string;
   bid_type: "FIXED" | "MILESTONE";
   total_bid: number;
@@ -10,7 +10,6 @@ export interface IProposal {
   is_draft: boolean;
   milestones?: IMilestone[];
   answers: IProposalAnswer[];
-  userId: string;
 }
 
 export interface IMilestone {

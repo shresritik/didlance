@@ -26,9 +26,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getRandomDigitalArt } from "@/lib/utils";
+import { getRandomDigitalArt, queryClient } from "@/lib/utils";
 import NotificationDialog from "../Noti";
 import { useRouter } from "next/navigation";
+import { useQueries, useQuery } from "@tanstack/react-query";
 
 const Navbar = () => {
   const wallet = useWallet();
@@ -37,37 +38,26 @@ const Navbar = () => {
   const [address, setAddress] = useState<string>("");
   const [isClientMode, setIsClientMode] = useState(false);
   const [isFirst, setIsFirst] = useState(true);
-  useEffect(() => {
-    if (wallet.account) {
-      setIsFirst(false);
-    }
-  }, [wallet]);
 
-  useEffect(() => {
-    const postUser = async (account: string) => {
-      const res = await fetch("/api/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sui_address: account,
-          commit: 1000.0,
-        }),
-      });
-      return res.json();
-    };
-    if (!isFirst) {
-      Promise.resolve(postUser(wallet.address)).then((el) => {
-        if (el.message) {
-          localStorage.setItem("userId", el.message?.id);
+  const postUser = async (account: string) => {
+    const res = await fetch("/api/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sui_address: account,
+        commit: 1000.0,
+      }),
+    });
+    const jsonResponse = await res.json();
+    return jsonResponse;
+  };
 
-          setIsFirst(false);
-        }
-      });
-    }
-  }, [isFirst]);
-
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: () => wallet && postUser(wallet.address),
+  });
   // Modified useEffect for address tracking
   useEffect(() => {
     if (wallet.address) {
@@ -110,10 +100,13 @@ const Navbar = () => {
         <div className="flex justify-between h-16 items-center">
           {/* Left section */}
           <div className="flex items-center">
-            <Link href="/" className="flex-shrink-0">
-              <h1 className="text-2xl font-bold text-green-600">DIDWork</h1>
+            <Link
+              href="/"
+              className="flex-shrink-0 justify-center items-center text-lg"
+            >
+              <span>Stake</span>
+              <span className=" font-bold text-blue-400">Lance</span>
             </Link>
-
             <div className="hidden md:flex ml-10 space-x-8">
               {!isClientMode ? (
                 <>
@@ -143,7 +136,7 @@ const Navbar = () => {
                     Post Work
                   </Link>
                   <Link
-                    href="/my-jobs"
+                    href="/dashboard/my-jobs"
                     className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                   >
                     My Jobs
@@ -156,7 +149,9 @@ const Navbar = () => {
           {/* Right section */}
           <div className="flex items-center space-x-4">
             <NotificationDialog suiAddress={address} />
+
             <div className="flex items-center justify-between space-x-4 p-4 bg-gray-50 rounded-lg">
+              {/* <div>{user?.message?.commit} Commits</div> */}
               <h4
                 className="font-medium"
                 onClick={() => handleClick("client-mode")}
@@ -215,7 +210,10 @@ const Navbar = () => {
                     <DropdownMenuItem
                       onClick={() => {
                         wallet.disconnect();
-                        localStorage.removeItem("userId");
+                        queryClient.removeQueries({
+                          queryKey: ["user"],
+                          exact: true,
+                        });
                         router.push("/");
                       }}
                       className="cursor-pointer hover:bg-gray-200 transition-colors duration-200"
@@ -269,7 +267,7 @@ const Navbar = () => {
                         Find Work
                       </Link>
                       <Link
-                        href="/my-jobs"
+                        href="/dashboard//my-jobs"
                         className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                         onClick={() => setMobileMenuOpen(false)}
                       >
@@ -300,7 +298,7 @@ const Navbar = () => {
                         Post Work
                       </Link>
                       <Link
-                        href="/my-jobs"
+                        href="/dashboard//my-jobs"
                         className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                         onClick={() => setMobileMenuOpen(false)}
                       >

@@ -57,25 +57,25 @@ const JobApplicationPage = () => {
     const fetchJobDetails = async () => {
       try {
         setIsLoading(true);
+        const data = await fetch("/api/jobs/" + params.jobId);
 
-        // Check if jobs exist and the jobId parameter is valid
-        if (jobs && params?.jobId) {
-          // Find the job with the matching jobId
-          const foundJob = jobs.find((job) => job.id === params.jobId);
+        // // Check if jobs exist and the jobId parameter is valid
+        // if (jobs && params?.jobId) {
+        //   // Find the job with the matching jobId
+        //   const foundJob = jobs.find((job) => job.id === params.jobId);
 
-          if (foundJob) {
-            setJob(foundJob); // Set the job details
-          } else {
-            setError("Job not found.");
-          }
+        if (data.ok) {
+          setJob(await data.json()); // Set the job details
+        } else {
+          setError("Job not found.");
         }
+        // }
       } catch (err) {
         setError("An error occurred while fetching job details.");
       } finally {
         setIsLoading(false); // End loading state
       }
     };
-
     if (params?.jobId) {
       fetchJobDetails();
     }
@@ -119,7 +119,7 @@ const JobApplicationPage = () => {
 
       if (wallet?.address === undefined || params?.job) return;
       const proposal: IProposal = {
-        freelancer_address: wallet?.address, // Your Sui wallet address
+        sui_address: wallet?.address, // Your Sui wallet address
         jobId: params?.jobId as string,
         bid_type: bidType === "milestone" ? "MILESTONE" : "FIXED",
         total_bid: parseFloat(totalBid),
@@ -200,9 +200,7 @@ const JobApplicationPage = () => {
 
     // Redirect after submission
     const currentProposals = Array.isArray(job?.proposals) ? job.proposals : [];
-    const userId = localStorage.getItem("userId");
-    if (!userId) return;
-    const updatedProposals = [...currentProposals, wallet?.address, userId];
+    const updatedProposals = [...currentProposals, wallet?.address];
     const updateResponse = await fetch(`/api/jobs/${job?.id}`, {
       method: "PUT",
       headers: {
@@ -317,19 +315,19 @@ const JobApplicationPage = () => {
             <div
               className={`space-y-4 p-4 ${!esCrow && "bg-gray-60 opacity-60"}`}
             >
-              <Label>Bid Amount</Label>
+              <Label>Stake Amount</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                 <Input
                   disabled={!esCrow}
                   type="number"
-                  placeholder="Enter your bid amount"
+                  placeholder="Enter your stake amount"
                   value={totalBid}
                   onChange={(e) => setTotalBid(e.target.value)}
                   className="pl-10"
                 />
               </div>
-              <div className="space-y-2 text-sm">
+              {/* <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-gray-500">
                   <span>Service Fee (20%)</span>
                   <span>-${serviceFee.toFixed(2)}</span>
@@ -338,7 +336,7 @@ const JobApplicationPage = () => {
                   <span>You'll Receive</span>
                   <span>${youllReceive.toFixed(2)}</span>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             <div className="space-y-2">

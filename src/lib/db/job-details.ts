@@ -1,5 +1,6 @@
 import { Pool } from "@neondatabase/serverless";
 import { z } from "zod"; // Note: You'll need to install zod separately
+import { prisma } from "../prisma";
 
 // Zod schema for validation
 const VerificationStatusSchema = z.object({
@@ -38,7 +39,6 @@ const JobDetailsSchema = z.object({
   client_history: ClientHistorySchema,
   attachments: z.array(z.string()).optional(),
   questions: z.array(z.string()).optional(),
-  userId: z.string().optional(),
 });
 
 type JobDetails = z.infer<typeof JobDetailsSchema>;
@@ -92,9 +92,9 @@ class JobDetailsDB {
           time_posted, category, expertise, proposals, 
           client_rating, client_location, job_type, 
           project_length, weekly_hours, skills, activity_on, job_status,
-          client_history, attachments, questions, "userId"
+          client_history, attachments, questions
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
         RETURNING *
       `;
 
@@ -120,7 +120,6 @@ class JobDetailsDB {
         JSON.stringify(validatedData.client_history),
         validatedData.attachments,
         validatedData.questions,
-        validatedData.userId,
       ];
 
       const result = await this.pool.query(query, values);
@@ -134,19 +133,26 @@ class JobDetailsDB {
   }
 
   // Get a job by ID
-  async getJob(id: string): Promise<JobDetails | null> {
-    const query = "SELECT * FROM job_details WHERE id = $1";
-    const result = await this.pool.query(query, [id]);
+  async getJob(id: string) {
+    const job = await prisma.job_details.findFirst({
+      where: {
+        id,
+      },
+      include: { job_proposals: true },
+    });
+    return job;
+    // const query = "SELECT * FROM job_details WHERE id = $1";
+    // const result = await this.pool.query(query, [id]);
 
-    if (result.rows.length === 0) {
-      return null;
-    }
+    // if (result.rows.length === 0) {
+    //   return null;
+    // }
 
-    const job = result.rows[0];
-    return {
-      ...job,
-      clientHistory: job.client_history,
-    };
+    // const job = result.rows[0];
+    // return {
+    //   ...job,
+    //   clientHistory: job.client_history,
+    // };
   }
 
   async getJobUsingAddress(id: string): Promise<JobDetails[] | null> {
@@ -159,10 +165,7 @@ class JobDetailsDB {
   }
 
   // Update a job
-  async updateJob(
-    id: string,
-    jobDetails: Partial<JobDetails>
-  ): Promise<JobDetails | null> {
+  async updateJob(id: string, jobDetails: Partial<JobDetails>) {
     try {
       const currentJob = await this.getJob(id);
       if (!currentJob) {
@@ -170,62 +173,16 @@ class JobDetailsDB {
       }
 
       const updatedJob = { ...currentJob, ...jobDetails };
-
       const validatedData = JobDetailsSchema.parse(updatedJob);
-
-      const query = `
-        UPDATE job_details 
-        SET 
-          title = $1,
-          description = $2,
-          long_description = $3,
-          budget = $4,
-          time_posted = $5,
-          category = $6,
-          expertise = $7,
-          proposals = $8,
-          client_rating = $9,
-          client_location = $10,
-          job_type = $11,
-          project_length = $12,
-          weekly_hours = $13,
-          skills = $14,
-          job_status = $15,
-          activity_on = $16,
-          client_history = $17,
-          attachments = $18,
-          questions = $19,
-          "userId" = $20
-        WHERE id = $21
-        RETURNING *
-      `;
-
-      const values = [
-        validatedData.title,
-        validatedData.description,
-        validatedData.long_description,
-        validatedData.budget,
-        validatedData.time_posted,
-        validatedData.category,
-        validatedData.expertise,
-        validatedData.proposals,
-        validatedData.client_rating,
-        validatedData.client_location,
-        validatedData.job_type, // Changed from jobType
-        validatedData.project_length,
-        validatedData.weekly_hours, // Changed from weeklyHours
-        validatedData.skills,
-        validatedData.job_status, // Moved to correct position
-        validatedData.activity_on, // Changed from activityOn
-        validatedData.client_history, // Removed JSON.stringify()
-        validatedData.attachments,
-        validatedData.questions,
-        validatedData.userId,
-        id,
-      ];
-
-      const result = await this.pool.query(query, values);
-      return result.rows[0];
+      const updatedJobRecord = await prisma.job_details.update({
+        where: {
+          id: id,
+        },
+        data: {
+          ...validatedData, // Spread validated data into the update
+        },
+      });
+      return updatedJobRecord;
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new Error(`Validation error: ${error.message}`);

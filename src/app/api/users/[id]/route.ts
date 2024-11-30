@@ -6,10 +6,10 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id: userId } = await params;
+    const { id: sui_address } = await params;
     const data = await prisma.user.findFirst({
       where: {
-        id: userId,
+        sui_address,
       },
     });
     if (!data) {

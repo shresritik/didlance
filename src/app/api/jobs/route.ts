@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       page,
       limit
     );
-    console.log("asd---", results);
+
     return NextResponse.json(results);
   } catch (error) {
     console.error("Error fetching jobs:", error);

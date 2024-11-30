@@ -34,6 +34,7 @@ const CreateJobPosting = () => {
     experienceLevel: "Entry Level",
     attachments: [],
     additionalQuestions: [{ question: "", required: false }],
+    stake: 0,
   });
 
   const handleInputChange = (field: any, value: any) => {
@@ -107,6 +108,7 @@ const CreateJobPosting = () => {
         skills: selectedSkills,
         activity_on: currentTime,
         job_status: JobStatus.OPEN,
+        min_stake: formData.stake,
         client_history: {
           jobsPosted: 1, // You might want to get this from the user's profile
           hireRate: 0, // You might want to get this from the user's profile
@@ -124,7 +126,6 @@ const CreateJobPosting = () => {
         questions: formData.additionalQuestions
           .filter((q) => q.question.trim() !== "")
           .map((q) => q.question),
-        userId: localStorage.getItem("userId") || "0",
       };
 
       // Submit the job data to the API
@@ -258,6 +259,23 @@ const CreateJobPosting = () => {
                     onChange={(e) =>
                       handleInputChange("amount", e.target.value)
                     }
+                    className="w-full pl-10 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 ">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Minimum Stake
+                </label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <input
+                    type="number"
+                    placeholder="Enter amount"
+                    value={formData.stake}
+                    onChange={(e) => handleInputChange("stake", e.target.value)}
                     className="w-full pl-10 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
