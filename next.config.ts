@@ -8,6 +8,15 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true, // Disables type-checking during builds
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "ik.imagekit.io",
+        port: "",
+      },
+    ],
+  },
   /* config options here */
 };
 

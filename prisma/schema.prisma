@@ -12,6 +12,41 @@ model User {
   commit      Decimal       @db.Decimal(10, 2)
   job_id      job_details[]
   Proposal    Proposal[]
+  posts       Post[]
+  Like        Like[]
+  Comment     Comment[]
+}
+
+model Post {
+  id          String    @id @default(cuid())
+  url         String
+  post        String
+  User        User?     @relation(fields: [sui_address], references: [sui_address])
+  sui_address String
+  createdAt   DateTime  @default(now())
+  Like        Like[]
+  Comment     Comment[]
+}
+
+model Like {
+  id          String   @id @default(cuid())
+  user        User?    @relation(fields: [sui_address], references: [sui_address])
+  sui_address String
+  post        Post     @relation(fields: [postId], references: [id])
+  postId      String
+  createdAt   DateTime @default(now())
+
+  @@unique([sui_address, postId]) // Ensures a user can like a post only once
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  content     String
+  user        User?    @relation(fields: [sui_address], references: [sui_address])
+  sui_address String
+  post        Post     @relation(fields: [postId], references: [id])
+  postId      String
+  createdAt   DateTime @default(now())
 }
 
 model PushSubscription {

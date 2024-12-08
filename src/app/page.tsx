@@ -159,7 +159,7 @@ const ConnectWallet = ({ wallet }) => (
   </div>
 );
 
-export default function App() {
+export default function About() {
   const wallet = useWallet();
 
   // useEffect(() => {
