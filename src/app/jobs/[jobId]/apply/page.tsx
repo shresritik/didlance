@@ -23,6 +23,8 @@ import { Switch } from "@/components/ui/switch";
 import { useJobs } from "@/hooks/useJobs";
 import { useWallet } from "@suiet/wallet-kit";
 import { notifyJobApplication } from "@/lib/utils";
+import { memberships } from "@/components/Membership/utils";
+import { MembershipCard } from "@/components/Membership/membership-card";
 
 interface Milestone {
   id: string;
@@ -52,7 +54,7 @@ const JobApplicationPage = () => {
   const [esCrow, setEsCrow] = useState(false);
   const [isDraft, setIsDraft] = useState(false);
   const [error, setError] = useState<String>();
-
+  const [selectCardType, setSelectCardType] = useState("Basic");
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
@@ -305,38 +307,34 @@ const JobApplicationPage = () => {
 
             <div className="flex items-center justify-between space-x-4 p-4 bg-gray-50 rounded-lg">
               <div>
-                <h4 className="font-medium">Escrow</h4>
+                <h4 className="font-medium">
+                  Escrow - Minimum expected escrow amount by client $
+                  {+job.budget.split("- ")[1] * (1 - job.min_stake / 100)} ~ (
+                  {job.min_stake}% of total budget)
+                </h4>
               </div>
               <Switch checked={esCrow} onCheckedChange={setEsCrow} />
             </div>
 
             {/* Bid Amount */}
 
-            <div
-              className={`space-y-4 p-4 ${!esCrow && "bg-gray-60 opacity-60"}`}
-            >
-              <Label>Stake Amount</Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                <Input
-                  disabled={!esCrow}
-                  type="number"
-                  placeholder="Enter your stake amount"
-                  value={totalBid}
-                  onChange={(e) => setTotalBid(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              {/* <div className="space-y-2 text-sm">
-                <div className="flex justify-between text-gray-500">
-                  <span>Service Fee (20%)</span>
-                  <span>-${serviceFee.toFixed(2)}</span>
+            <div className="relative flex flex-col sm:flex-row justify-center items-center space-y-8 sm:space-y-0 p-5 sm:space-x-4 ">
+              {memberships.map((membership, index) => (
+                <div
+                  key={index}
+                  onClick={() => esCrow && setSelectCardType(membership.title)}
+                >
+                  <MembershipCard
+                    {...membership}
+                    disabled={!esCrow}
+                    className={`${
+                      membership.title === selectCardType
+                        ? "border-8 border-yellow-400"
+                        : ""
+                    } ${!esCrow && "hover:scale-1 opacity-30"} min-w-[200px]`}
+                  />
                 </div>
-                <div className="flex justify-between font-medium">
-                  <span>You'll Receive</span>
-                  <span>${youllReceive.toFixed(2)}</span>
-                </div>
-              </div> */}
+              ))}
             </div>
 
             <div className="space-y-2">

@@ -6,6 +6,7 @@ import { JobDetails, JobStatus } from "@/types/job-details";
 import { useToast } from "@/hooks/use-toast";
 
 import { useWallet } from "@suiet/wallet-kit";
+import { Switch } from "@/components/ui/switch";
 interface Skill {
   id: string;
   name: string;
@@ -14,6 +15,7 @@ interface Skill {
 const CreateJobPosting = () => {
   const wallet = useWallet();
   const { toast } = useToast();
+  const [esCrow, setEsCrow] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +36,8 @@ const CreateJobPosting = () => {
     experienceLevel: "Entry Level",
     attachments: [],
     additionalQuestions: [{ question: "", required: false }],
-    stake: 0,
+    stakeDiscount: 0,
+    stakeAmount: 0,
   });
 
   const handleInputChange = (field: any, value: any) => {
@@ -72,7 +75,8 @@ const CreateJobPosting = () => {
     setCurrentStep(currentStep - 1);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
       setIsSubmitting(true);
       setError(null);
@@ -108,7 +112,7 @@ const CreateJobPosting = () => {
         skills: selectedSkills,
         activity_on: currentTime,
         job_status: JobStatus.OPEN,
-        min_stake: formData.stake,
+        min_stake: +formData.stakeDiscount,
         client_history: {
           jobsPosted: 1, // You might want to get this from the user's profile
           hireRate: 0, // You might want to get this from the user's profile
@@ -127,7 +131,6 @@ const CreateJobPosting = () => {
           .filter((q) => q.question.trim() !== "")
           .map((q) => q.question),
       };
-
       // Submit the job data to the API
       const response = await fetch("/api/jobs", {
         method: "POST",
@@ -162,6 +165,7 @@ const CreateJobPosting = () => {
       setIsSubmitting(false);
     }
   };
+
   return (
     <div className="max-w-3xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Post a Project</h1>
@@ -264,20 +268,52 @@ const CreateJobPosting = () => {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-1 ">
+            <div className="flex items-center justify-between space-x-4 p-4 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium">Escrow</h4>
+              </div>
+              <Switch checked={esCrow} onCheckedChange={setEsCrow} />
+            </div>
+
+            <div
+              className={`grid grid-cols-1 ${
+                esCrow ? "opacity-1" : "opacity-40"
+              }`}
+            >
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Minimum Stake
                 </label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                  <input
-                    type="number"
-                    placeholder="Enter amount"
-                    value={formData.stake}
-                    onChange={(e) => handleInputChange("stake", e.target.value)}
-                    className="w-full pl-10 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                <div className=" flex w-full ">
+                  <div className="relative w-full">
+                    <input
+                      disabled={!esCrow}
+                      type="number"
+                      placeholder="Enter discount in perenctage"
+                      value={formData.stakeDiscount}
+                      onChange={(e) =>
+                        handleInputChange("stakeDiscount", e.target.value)
+                      }
+                      className="w-full pl-10 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <span className="absolute right-10 top-3">%</span>
+                  </div>
+                  <div className="flex justify-center relative  w-full">
+                    <DollarSign className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+
+                    <input
+                      disabled={true}
+                      type="number"
+                      placeholder="Enter amount"
+                      value={
+                        formData.amount * (1 - formData.stakeDiscount / 100)
+                      }
+                      onChange={(e) =>
+                        handleInputChange("stakeAmount", e.target.value)
+                      }
+                      className="w-full pl-10 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

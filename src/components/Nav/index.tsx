@@ -30,6 +30,7 @@ import { getRandomDigitalArt, queryClient } from "@/lib/utils";
 import NotificationDialog from "../Noti";
 import { usePathname, useRouter } from "next/navigation";
 import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
+import RandomAvatar from "../utils/RandomAvatar";
 
 const Navbar = () => {
   const pathname = usePathname();
@@ -93,6 +94,10 @@ const Navbar = () => {
       router.push("/job-feed");
     }
   };
+  useEffect(() => {
+    setIsClientMode(pathname === "/post-work");
+  }, [pathname]);
+
   return (
     <nav className="border-b border-gray-200 bg-white fixed w-full top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -108,6 +113,14 @@ const Navbar = () => {
             </Link>
             {pathname !== "/" && (
               <div className="hidden md:flex ml-10 space-x-8">
+                <Link
+                  href="/feed"
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Feed
+                </Link>
+
                 {!isClientMode ? (
                   <>
                     <Link
@@ -143,6 +156,13 @@ const Navbar = () => {
                     </Link>
                   </>
                 )}
+                <Link
+                  href="/membership"
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Membership
+                </Link>
               </div>
             )}
           </div>
@@ -176,12 +196,7 @@ const Navbar = () => {
                             {addressEllipsis(wallet.account.address)}
                           </p>
                         </div>
-                        <img
-                          suppressHydrationWarning={true}
-                          className="h-8 w-8 rounded-full"
-                          src={getRandomDigitalArt()}
-                          alt="Profile"
-                        />
+                        <RandomAvatar />
                         <ChevronDown className="h-4 w-4 text-gray-500" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56">
@@ -274,6 +289,13 @@ const Navbar = () => {
                   <DialogDescription>Navigation options</DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col space-y-4 p-4">
+                  <Link
+                    href="/feed"
+                    className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Feed
+                  </Link>
                   {!isClientMode ? (
                     <>
                       <Link

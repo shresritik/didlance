@@ -8,6 +8,7 @@ import Upload from "../utils/Upload";
 import { useWallet } from "@suiet/wallet-kit";
 import { useMutation } from "@tanstack/react-query";
 import { getRandomDigitalArt, queryClient } from "@/lib/utils";
+import RandomAvatar from "../utils/RandomAvatar";
 interface uploadStates {
   url: string;
   err?: string;
@@ -76,11 +77,8 @@ export function CreatePost() {
   return (
     <div className="bg-white rounded-lg shadow">
       <div className="p-4">
-        <div className="flex gap-3">
-          <Avatar>
-            <AvatarImage src={getRandomDigitalArt()} alt="User" />
-            <AvatarFallback>PS</AvatarFallback>
-          </Avatar>
+        <div className="flex gap-1">
+          <RandomAvatar />
           <form onSubmit={handleSubmit} className=" space-x-2 flex w-full">
             <div className="w-full">
               <Input

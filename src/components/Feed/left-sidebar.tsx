@@ -1,28 +1,31 @@
+"use client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Sparkles } from "lucide-react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
+import { useWallet } from "@suiet/wallet-kit";
+import { getRandomDigitalArt, truncateHex } from "@/lib/utils";
+import RandomAvatar from "../utils/RandomAvatar";
 
 export function LeftSidebar() {
+  const wallet = useWallet();
+
   return (
     <ScrollArea.Root className="h-[calc(100vh-3.5rem)] w-full overflow-hidden">
       <ScrollArea.Viewport className="h-full w-full">
-        <div className="space-y-4 pr-4">
+        <div className="space-y-4 ">
           <div className="bg-white rounded-lg shadow">
             <div className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center">
                   <Sparkles className="w-5 h-5 mr-2 text-blue-500" />
-                  <span className="font-semibold">Engage AI</span>
+                  <span className="">StakeLance</span>
                 </div>
                 <HelpCircle className="w-5 h-5 text-gray-500" />
               </div>
               <div className="flex items-center text-sm mb-2">
-                <Avatar className="w-6 h-6 mr-2">
-                  <AvatarImage src="/placeholder-user.jpg" alt="User" />
-                  <AvatarFallback>PS</AvatarFallback>
-                </Avatar>
-                <span>9165prashant@gmail.com</span>
+                <RandomAvatar />
+                <span>{truncateHex(wallet?.address)}</span>
               </div>
               <div className="text-sm mb-2">
                 Current Plan:{" "}

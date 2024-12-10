@@ -39,6 +39,7 @@ const JobDetailsSchema = z.object({
   client_history: ClientHistorySchema,
   attachments: z.array(z.string()).optional(),
   questions: z.array(z.string()).optional(),
+  min_stake: z.number().default(0),
 });
 
 type JobDetails = z.infer<typeof JobDetailsSchema>;
@@ -92,9 +93,9 @@ class JobDetailsDB {
           time_posted, category, expertise, proposals, 
           client_rating, client_location, job_type, 
           project_length, weekly_hours, skills, activity_on, job_status,
-          client_history, attachments, questions
+          client_history, attachments, questions,min_stake
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21,$22)
         RETURNING *
       `;
 
@@ -120,6 +121,7 @@ class JobDetailsDB {
         JSON.stringify(validatedData.client_history),
         validatedData.attachments,
         validatedData.questions,
+        validatedData.min_stake,
       ];
 
       const result = await this.pool.query(query, values);
