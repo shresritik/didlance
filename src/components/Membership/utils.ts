@@ -1,6 +1,6 @@
 export const memberships = [
   {
-    title: "Basic",
+    title: "Entry Level",
     price: 50,
     description: "Perfect for freelancers just starting out.",
     features: [
@@ -10,7 +10,7 @@ export const memberships = [
     ],
   },
   {
-    title: "Pro",
+    title: "Intermediate",
     price: 100,
     description: "Ideal for established freelancers looking to grow.",
     features: [
@@ -20,7 +20,7 @@ export const memberships = [
     popular: true,
   },
   {
-    title: "Elite",
+    title: "Expert",
     price: 500,
     description: "For top-tier freelancers seeking premium opportunities.",
     features: [
@@ -30,3 +30,15 @@ export const memberships = [
     ],
   },
 ];
+
+export const membershipStatus = {
+  "Entry Level": "ENTRY_LEVEL",
+  Intermediate: "INTERMEDIATE",
+  Expert: "EXPERT",
+};
+
+export const membershipSnakeCase = {
+  ENTRY_LEVEL: "Entry Level",
+  INTERMEDIATE: "Intermediate",
+  EXPERT: "Expert",
+};

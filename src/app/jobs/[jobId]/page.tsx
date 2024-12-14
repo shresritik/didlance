@@ -453,6 +453,7 @@ const JobPage = () => {
                   project_length: job.project_length,
                   skills: job.skills,
                   status: job.job_status,
+                  min_stake: job.min_stake,
                 },
               };
               return <ProposalCard key={proposal.id} proposal={pr} />;

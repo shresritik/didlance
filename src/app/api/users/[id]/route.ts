@@ -11,6 +11,9 @@ export async function GET(
       where: {
         sui_address,
       },
+      include: {
+        membership: { select: { status: { select: { name: true } } } },
+      },
     });
     if (!data) {
       return NextResponse.json({ error: "No data found" }, { status: 400 });

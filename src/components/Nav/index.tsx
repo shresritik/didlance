@@ -58,6 +58,16 @@ const Navbar = () => {
     mutationKey: ["user"],
     mutationFn: postUser,
   });
+  const fetchUser = async () => {
+    const data = await fetch("/api/users/" + wallet.address);
+    return data.json();
+  };
+  const { data, isLoading } = useQuery({
+    queryKey: ["user/" + wallet.address],
+    queryFn: fetchUser,
+    enabled: wallet.connected,
+  });
+
   // Modified useEffect for address tracking
   // useEffect(() => {
   //   if (wallet.address) {
@@ -166,13 +176,14 @@ const Navbar = () => {
               </div>
             )}
           </div>
-
           {/* Right section */}
           <div className="flex items-center space-x-4">
             {pathname !== "/" ? (
               <>
                 <div className="flex items-center justify-between space-x-4 p-4 bg-gray-50 rounded-lg">
-                  {/* <div>{user?.message?.commit} Commits</div> */}
+                  {!isLoading && data && (
+                    <div>{data?.message?.commit} Commits</div>
+                  )}
                   <h4
                     className="font-medium"
                     onClick={() => handleClick("client-mode")}
@@ -234,8 +245,6 @@ const Navbar = () => {
                     <ConnectButton
                       onConnectSuccess={async (walletName: string) => {
                         await mutateAsync(wallet.address);
-                        console.log(user);
-                        console.log(walletName, wallet.getAccounts());
                       }}
                       onConnectError={(err: BaseError) => {
                         if (
@@ -355,4 +364,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+export default React.memo(Navbar);

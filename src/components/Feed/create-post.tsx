@@ -69,7 +69,6 @@ export function CreatePost() {
       sui_address: wallet.address,
       url: uploadStates.url,
     };
-    console.log(data);
     mutate(data, {
       onSuccess: () => queryClient.invalidateQueries({ queryKey: ["post"] }),
     });

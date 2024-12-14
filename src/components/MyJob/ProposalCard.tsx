@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { getStatusColor } from "@/lib/utils";
+import { getStakingAmount } from "../utils/utils";
 
 export interface Milestone {
   id: string;
@@ -32,6 +33,7 @@ export interface Job {
   project_length: string;
   skills: string[];
   status: string;
+  min_stake?: string;
 }
 
 export interface Proposal {
@@ -50,7 +52,7 @@ export interface Proposal {
 
 const ProposalCard = ({ proposal }: { proposal: Proposal }) => {
   const router = useRouter();
-
+  console.log(proposal);
   return (
     <Card
       onClick={() => router.push(`/proposals/${proposal.id}`)}
@@ -73,7 +75,10 @@ const ProposalCard = ({ proposal }: { proposal: Proposal }) => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-gray-500" />
-            <span>Stake: ${proposal.total_bid.toLocaleString()}</span>
+            <span>
+              Stake: $
+              {getStakingAmount(proposal.job.budget, proposal.job.min_stake)}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-gray-500" />

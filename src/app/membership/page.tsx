@@ -1,7 +1,88 @@
+"use client";
+import { ConfirmationDialog } from "@/components/Membership/confirmation-dialog";
 import { MembershipCard } from "@/components/Membership/membership-card";
-import { memberships } from "@/components/Membership/utils";
+import { memberships, membershipStatus } from "@/components/Membership/utils";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/utils";
+import { useWallet } from "@suiet/wallet-kit";
+import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
+interface Membership {
+  title: string;
+  price: number;
+  description: string;
+  features: string[];
+  popular?: boolean;
+}
 
 export default function MembershipPage() {
+  const wallet = useWallet();
+  const { toast } = useToast();
+  const [selectedPlan, setSelectedPlan] = useState<Membership | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const handleSelectPlan = (plan: Membership) => {
+    setSelectedPlan(plan);
+    setIsDialogOpen(true);
+  };
+
+  const postMembership = async (body: {
+    sui_address: string;
+    membership: string;
+  }) => {
+    const data = await fetch("/api/membership", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    const res = await data.json();
+    return res;
+  };
+
+  const { data, mutate, isPending } = useMutation({
+    mutationFn: postMembership,
+    onSuccess: () => {},
+  });
+  const handleConfirmPlan = async () => {
+    if (!wallet.address) return;
+    const body = {
+      sui_address: wallet.address,
+      membership: membershipStatus[selectedPlan?.title],
+    };
+    // Here you would typically handle the subscription process
+    mutate(body, {
+      onSuccess: (data) => {
+        if (data?.status === 200) {
+          queryClient.invalidateQueries({
+            queryKey: ["user/" + wallet.address],
+          });
+          toast({
+            variant: "destructive",
+            title: "Membership is purchased successfully",
+            description: "Successful.",
+            className: "bg-green-500 text-white",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Failed to purchase membership.",
+            description: data.message,
+            className: "bg-red-500 text-white",
+          });
+        }
+        setIsDialogOpen(false);
+      },
+      onError: (data) =>
+        toast({
+          variant: "destructive",
+          title: "Failed to purchase membership.",
+          description: data.message,
+          className: "bg-red-500 text-white",
+        }),
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -27,7 +108,10 @@ export default function MembershipPage() {
                   index === 1 ? "sm:translate-y-8" : ""
                 } ${index === 2 ? "sm:translate-y-12" : ""}`}
               >
-                <MembershipCard {...membership} />
+                <MembershipCard
+                  {...membership}
+                  onSelect={() => handleSelectPlan(membership)}
+                />
               </div>
             ))}
           </div>
@@ -43,6 +127,16 @@ export default function MembershipPage() {
           </p>
         </div>
       </div>
+      <ConfirmationDialog
+        loading={isPending}
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onConfirm={handleConfirmPlan}
+        title="Confirm Your Subscription"
+        description="Are you sure you want to subscribe to this plan?"
+        plan={selectedPlan?.title || ""}
+        price={selectedPlan?.price || 0}
+      />
     </div>
   );
 }

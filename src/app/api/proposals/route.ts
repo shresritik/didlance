@@ -135,6 +135,7 @@ export async function GET(request: Request) {
             project_length: true,
             skills: true,
             job_status: true,
+            min_stake: true,
           },
         },
       },

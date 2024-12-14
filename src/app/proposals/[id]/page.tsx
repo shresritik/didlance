@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { getStatusColor, queryClient } from "@/lib/utils";
+import { getStakingAmount } from "@/components/utils/utils";
+import { getStatusColor, queryClient, truncateHex } from "@/lib/utils";
 import {
   job_details,
   Milestone,
@@ -66,7 +67,6 @@ const UserProposal = () => {
       }
 
       const result = await response.json();
-      console.log("Updated resource:", result);
       return result;
     } catch (error) {
       console.error("Error updating resource:", error);
@@ -110,7 +110,12 @@ const UserProposal = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your Proposal</CardTitle>
+        <CardTitle>
+          {wallet.address !== proposal.job.sui_address
+            ? "Your "
+            : truncateHex(proposal.sui_address) + " 's "}
+          Proposal
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Bid Type Selection */}
@@ -143,7 +148,10 @@ const UserProposal = () => {
               disabled={true}
               type="number"
               placeholder="Enter your stake amount"
-              value={proposal?.total_bid as unknown as string}
+              value={getStakingAmount(
+                proposal.job.budget,
+                proposal.job.min_stake
+              )}
               className="pl-10"
             />
           </div>

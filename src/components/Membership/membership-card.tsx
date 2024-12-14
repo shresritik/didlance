@@ -21,9 +21,12 @@ interface MembershipCardProps {
   popular?: boolean;
   className?: string;
   disabled?: boolean;
+  plan?: boolean;
+  onSelect?: () => void;
 }
 
 export function MembershipCard({
+  plan = true,
   title,
   price,
   description,
@@ -31,6 +34,7 @@ export function MembershipCard({
   popular,
   className,
   disabled,
+  onSelect,
 }: MembershipCardProps) {
   return (
     <Card
@@ -69,14 +73,17 @@ export function MembershipCard({
           ))}
         </ul>
       </CardContent>
-      <CardFooter>
-        <Button
-          disabled={disabled}
-          className="w-full bg-yellow-400 text-gray-900 hover:bg-yellow-500"
-        >
-          {popular ? "Upgrade Now" : "Select Plan"}
-        </Button>
-      </CardFooter>
+      {plan && (
+        <CardFooter>
+          <Button
+            onClick={onSelect}
+            disabled={disabled}
+            className="w-full bg-yellow-400 text-gray-900 hover:bg-yellow-500"
+          >
+            {popular ? "Upgrade Now" : "Select Plan"}
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }

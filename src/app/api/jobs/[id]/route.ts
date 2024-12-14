@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const job = await jobDetailsDB.getJob(await params.id);
+    const job = await jobDetailsDB.getJob((await params).id);
     if (!job) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
@@ -43,7 +43,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const success = await jobDetailsDB.deleteJob(params.id);
+    const success = await jobDetailsDB.deleteJob((await params).id);
     if (!success) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }

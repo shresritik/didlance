@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { IMilestone } from "@/types/proposal";
+import { getStakingAmount } from "@/components/utils/utils";
 
 // Get user specific proposals
 export async function GET(
@@ -8,7 +9,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = params.id;
+    const id = await params.id;
     const proposal = await prisma.proposal.findUnique({
       where: {
         id,
@@ -68,6 +69,7 @@ export async function PATCH(
         }),
       },
       include: {
+        job: true,
         answers: true,
         milestones: true,
       },
@@ -89,19 +91,30 @@ export async function PATCH(
         },
       });
     }
-    if (Number(data.total_bid) > 0) {
-      const commitData = await prisma.user.findFirst({
+    const stakingAmount = getStakingAmount(
+      proposal.job.budget,
+      proposal.job.min_stake
+    );
+    if (stakingAmount > 0) {
+      const userData = await prisma.user.findFirst({
         where: {
           sui_address: data.sui_address,
+        },
+        include: {
+          membership: true,
         },
       });
-      const updatedCommit = Number(commitData.commit) - Number(data.total_bid);
-      const updatedUser = await prisma.user.update({
+      if (+userData.membership.amount < stakingAmount) {
+        throw new Error("Insufficient amount in membership to decrement.");
+      }
+      const membershipCommit = await prisma.membership.update({
         where: {
-          sui_address: data.sui_address,
+          id: userData.membershipId,
         },
         data: {
-          commit: updatedCommit,
+          amount: {
+            decrement: stakingAmount,
+          },
         },
       });
     }

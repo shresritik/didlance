@@ -23,8 +23,14 @@ import { Switch } from "@/components/ui/switch";
 import { useJobs } from "@/hooks/useJobs";
 import { useWallet } from "@suiet/wallet-kit";
 import { notifyJobApplication } from "@/lib/utils";
-import { memberships } from "@/components/Membership/utils";
+import {
+  memberships,
+  membershipSnakeCase,
+} from "@/components/Membership/utils";
 import { MembershipCard } from "@/components/Membership/membership-card";
+import { useQuery } from "@tanstack/react-query";
+import { getStakingAmount } from "@/components/utils/utils";
+import Link from "next/link";
 
 interface Milestone {
   id: string;
@@ -54,7 +60,18 @@ const JobApplicationPage = () => {
   const [esCrow, setEsCrow] = useState(false);
   const [isDraft, setIsDraft] = useState(false);
   const [error, setError] = useState<String>();
-  const [selectCardType, setSelectCardType] = useState("Basic");
+  const [selectCardType, setSelectCardType] = useState("Entry Level");
+
+  const fetchUser = async () => {
+    const data = await fetch("/api/users/" + wallet.address);
+    return data.json();
+  };
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ["user/" + wallet.address],
+    queryFn: fetchUser,
+    enabled: wallet.connected,
+  });
+
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
@@ -239,6 +256,7 @@ const JobApplicationPage = () => {
     //   router.push("/my-jobs");
     // }
   };
+  const stakingAmount = getStakingAmount(job?.budget, job?.min_stake);
 
   if (isLoading || !job) {
     return (
@@ -309,33 +327,64 @@ const JobApplicationPage = () => {
               <div>
                 <h4 className="font-medium">
                   Escrow - Minimum expected escrow amount by client $
-                  {+job.budget.split("- ")[1] * (1 - job.min_stake / 100)} ~ (
-                  {job.min_stake}% of total budget)
+                  {stakingAmount} ~ ({job.min_stake}% of total budget)
                 </h4>
               </div>
               <Switch checked={esCrow} onCheckedChange={setEsCrow} />
             </div>
 
             {/* Bid Amount */}
-
             <div className="relative flex flex-col sm:flex-row justify-center items-center space-y-8 sm:space-y-0 p-5 sm:space-x-4 ">
-              {memberships.map((membership, index) => (
-                <div
-                  key={index}
-                  onClick={() => esCrow && setSelectCardType(membership.title)}
-                >
-                  <MembershipCard
-                    {...membership}
-                    disabled={!esCrow}
-                    className={`${
-                      membership.title === selectCardType
-                        ? "border-8 border-yellow-400"
-                        : ""
-                    } ${!esCrow && "hover:scale-1 opacity-30"} min-w-[200px]`}
-                  />
-                </div>
-              ))}
+              {userLoading ? (
+                <h1>Loading...</h1>
+              ) : (
+                memberships.map((membership, index) => (
+                  <div
+                    key={index}
+                    onClick={() =>
+                      (esCrow ||
+                        membershipSnakeCase[
+                          userData.message.membership.status.name
+                        ] !== membership.title) &&
+                      setSelectCardType(membership.title)
+                    }
+                  >
+                    {stakingAmount <= membership.price && (
+                      <MembershipCard
+                        plan={false}
+                        {...membership}
+                        disabled={
+                          !esCrow ||
+                          membershipSnakeCase[
+                            userData?.message.membership?.status.name
+                          ] !== membership.title
+                        }
+                        className={`${
+                          membership.title === selectCardType ||
+                          membershipSnakeCase[
+                            userData?.message.membership?.status.name
+                          ] === membership.title
+                            ? "border-8 border-yellow-400"
+                            : ""
+                        }  ${
+                          (!esCrow ||
+                            membershipSnakeCase[
+                              userData?.message.membership?.status.name
+                            ] !== membership.title) &&
+                          "hover:scale-1 opacity-30"
+                        } min-w-[200px]`}
+                      />
+                    )}
+                  </div>
+                ))
+              )}
             </div>
+            <Link
+              href={"/membership"}
+              className="text-blue-500 text-sm flex justify-end"
+            >
+              + Purchase Membership
+            </Link>
 
             <div className="space-y-2">
               <Label>Cover Letter</Label>

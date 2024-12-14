@@ -8,13 +8,31 @@ datasource db {
 }
 
 model User {
-  sui_address String        @id @unique
-  commit      Decimal       @db.Decimal(10, 2)
-  job_id      job_details[]
-  Proposal    Proposal[]
-  posts       Post[]
-  Like        Like[]
-  Comment     Comment[]
+  sui_address  String        @id @unique
+  commit       Decimal       @db.Decimal(10, 2)
+  job_id       job_details[]
+  Proposal     Proposal[]
+  posts        Post[]
+  Like         Like[]
+  Comment      Comment[]
+  membershipId String?       @unique // Foreign key to Membership
+  membership   Membership?   @relation(fields: [membershipId], references: [id]) // One-to-one relationship
+}
+
+model Membership {
+  id       String           @id @default(cuid())
+  statusId String // Foreign key to MembershipStatus
+  status   MembershipStatus @relation(fields: [statusId], references: [id])
+  user     User? // One-to-one relationship
+  amount   Decimal          @db.Decimal(10, 2)
+}
+
+model MembershipStatus {
+  id          String       @id @default(cuid())
+  name        String       @unique // e.g., ENTRY_LEVEL, INTERMEDIATE, EXPERT
+  description String? // Optional metadata
+  price       Decimal      @db.Decimal(10, 2) // Optional: Cost of membership
+  memberships Membership[] // One-to-many relationship with Membership
 }
 
 model Post {

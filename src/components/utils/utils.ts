@@ -21,3 +21,6 @@ export const formatTimeDifference = (isoTime: string) => {
     }); // Example: "December 8, 2024"
   }
 };
+export function getStakingAmount(budget, stake): number {
+  return +budget?.split("- ")[1] * (1 - stake / 100);
+}

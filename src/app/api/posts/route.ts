@@ -8,7 +8,6 @@ export const GET = async (request: NextRequest) => {
 };
 export const POST = async (request: NextRequest) => {
   const { sui_address, post, url } = await request.json();
-  console.log(sui_address);
   const resBody: Omit<Post, "id" | "createdAt"> = {
     sui_address,
     post,
